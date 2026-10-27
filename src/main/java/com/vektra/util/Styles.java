@@ -18,6 +18,10 @@ import javax.swing.JTextField;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import java.net.URL;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.ImageIcon;
 
 /**
  * Colores, fuente y estilos comunes de todas las pantallas de Vektra.
@@ -75,6 +79,11 @@ public final class Styles {
 
     /** Clave donde cada campo guarda su texto de ejemplo. */
     private static final String PLACEHOLDER_KEY = "placeholder";
+    
+        /** Carpeta de las imágenes dentro de src/main/resources. */
+    private static final String IMAGES_PATH = "/images/";
+
+    private static final Logger LOGGER = Logger.getLogger(Styles.class.getName());
 
     /** Constructor privado: esta clase solo tiene miembros estáticos y no se instancia. */
     private Styles() {
@@ -89,6 +98,26 @@ public final class Styles {
      */
     public static Font font(int style, float size) {
         return FontUtil.getCustomFont().deriveFont(style, size);
+    }
+    
+        /**
+     * Carga una imagen de la carpeta resources/images y la ajusta al alto
+     * pedido, sin deformarla.
+     *
+     * @param fileName nombre del archivo, por ejemplo "error-view-mascot.png"
+     * @param height   alto en píxeles
+     * @return imagen lista para usar en un JLabel; si no existe, un ícono
+     *         vacío y un aviso en el registro
+     */
+    public static ImageIcon icon(String fileName, int height) {
+        URL url = Styles.class.getResource(IMAGES_PATH + fileName);
+        if (url == null) {
+            LOGGER.log(Level.WARNING, "No se encontró la imagen: {0}", fileName);
+            return new ImageIcon();
+        }
+        ImageIcon original = new ImageIcon(url);
+        return new ImageIcon(original.getImage()
+                .getScaledInstance(-1, height, java.awt.Image.SCALE_SMOOTH));
     }
 
     /**
