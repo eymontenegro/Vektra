@@ -38,11 +38,12 @@ public class Passenger extends Person {
         return email;
     }
 
-    /** @return el hash BCrypt de la contraseña */
-    public String getPassword() {
+    
+   /** @return el hash BCrypt de la contraseña */
+    public String getPasswordHash() {
         return password;
     }
-
+    
     public LocalDate getBirthDate() {
         return birthDate;
     }

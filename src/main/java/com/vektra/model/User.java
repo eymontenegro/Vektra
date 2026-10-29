@@ -35,11 +35,13 @@ public class User {
         return email;
     }
 
-    /** @return el hash BCrypt de la contraseña */
-    public String getPassword() {
+    /**
+     * @return el hash BCrypt de la contraseña
+     */
+    public String getPasswordHash() {
         return password;
     }
-
+    
     public Role getRole() {
         return role;
     }
