@@ -56,4 +56,5 @@ public class Passenger extends Person {
     public String toString() {
         return "Passenger{id=" + getId() + ", name=" + getFullName() + ", email=" + email + "}";
     }
+    
 }
