@@ -15,6 +15,11 @@ public class Passenger extends Person {
     private final LocalDateTime registrationDate;
 
     /**
+     * @param id               id del pasajero en la base de datos (0 si aún no se guarda)
+     * @param nationalId       número de documento de identidad
+     * @param name             nombres del pasajero
+     * @param lastName         apellidos del pasajero
+     * @param email            correo electrónico del pasajero
      * @param password         hash BCrypt de la contraseña
      * @param birthDate        fecha de nacimiento (puede ser nula)
      * @param registrationDate fecha de registro (puede ser nula si la base no la tiene)
@@ -39,11 +44,11 @@ public class Passenger extends Person {
     }
 
     
-   /** @return el hash BCrypt de la contraseña */
+    /** @return el hash BCrypt de la contraseña */
     public String getPasswordHash() {
         return password;
     }
-    
+
     public LocalDate getBirthDate() {
         return birthDate;
     }
@@ -57,5 +62,4 @@ public class Passenger extends Person {
     public String toString() {
         return "Passenger{id=" + getId() + ", name=" + getFullName() + ", email=" + email + "}";
     }
-    
 }
