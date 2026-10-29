@@ -58,7 +58,9 @@ public class TicketDao {
     public List<Ticket> findByPassenger(Passenger passenger) throws SQLException {
         String sql = "SELECT t.id, t.ticket_code, t.purchase_date, t.price, "
                 + "o.id AS origin_id, o.name AS origin_name, "
-                + "d.id AS destination_id, d.name AS destination_name "
+                + "o.latitude AS origin_latitude, o.longitude AS origin_longitude, "
+                + "d.id AS destination_id, d.name AS destination_name, "
+                + "d.latitude AS destination_latitude, d.longitude AS destination_longitude "
                 + "FROM tickets t "
                 + "JOIN stations o ON t.origin_station_id = o.id "
                 + "JOIN stations d ON t.destination_station_id = d.id "
@@ -77,15 +79,31 @@ public class TicketDao {
         return tickets;
     }
 
+    /**
+     * Arma un ticket con una fila del resultado. Las estaciones llevan la lista
+     * de líneas vacía porque un ticket no la necesita.
+     */
     private Ticket mapRow(ResultSet rs, Passenger passenger) throws SQLException {
         Timestamp purchase = rs.getTimestamp("purchase_date");
+        Station origin = new Station(
+                rs.getInt("origin_id"),
+                rs.getString("origin_name"),
+                rs.getDouble("origin_latitude"),
+                rs.getDouble("origin_longitude"),
+                List.of());
+        Station destination = new Station(
+                rs.getInt("destination_id"),
+                rs.getString("destination_name"),
+                rs.getDouble("destination_latitude"),
+                rs.getDouble("destination_longitude"),
+                List.of());
         return new Ticket(
                 rs.getInt("id"),
                 rs.getString("ticket_code"),
                 purchase == null ? null : purchase.toLocalDateTime(),
                 rs.getBigDecimal("price"),
                 passenger,
-                new Station(rs.getInt("origin_id"), rs.getString("origin_name")),
-                new Station(rs.getInt("destination_id"), rs.getString("destination_name")));
+                origin,
+                destination);
     }
 }
