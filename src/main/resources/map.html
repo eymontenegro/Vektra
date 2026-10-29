@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<!--
+  Mapa de estaciones y rutas de Vektra. Lo muestra MapView dentro de un WebView.
+
+  Necesita internet: Leaflet se descarga de unpkg.com y las imágenes del mapa
+  de OpenStreetMap. Sin conexión se muestra un aviso en lugar del mapa.
+
+  MapView llama a dos funciones:
+    loadData({stations: [...], routes: [...]})  dibuja estaciones y rutas
+    showError("mensaje")                        muestra un error encima del mapa
+-->
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mapa de Vektra</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <!-- El WebView de JavaFX dibuja mal las transformaciones 3D: Leaflet debe usar 2D. -->
+    <script>window.L_DISABLE_3D = true;</script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        html, body, #map { height: 100%; margin: 0; }
+        body { font-family: sans-serif; color: #333333; }
+        #notice {
+            display: none;
+            position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+            z-index: 1000; max-width: 80%;
+            padding: 10px 16px; border-radius: 8px;
+            background: #FEF2F2; border: 1px solid #EF4444; color: #333333;
+        }
+        .popup-title { font-weight: bold; margin-bottom: 4px; }
+        .popup-detail { color: #666666; }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<div id="notice"></div>
+<script>
+    /** Centro de Valledupar, donde empieza el mapa antes de tener datos. */
+    var VALLEDUPAR = [10.4631, -73.2532];
+    var INITIAL_ZOOM = 13;
+
+    var map = null;
+    var dataLayer = null;
+
+    /** Muestra un aviso encima del mapa. Usa textContent, así el texto nunca se toma como HTML. */
+    function showError(message) {
+        var notice = document.getElementById('notice');
+        notice.textContent = message;
+        notice.style.display = 'block';
+    }
+
+    /** Arma el contenido de una ventana emergente escapando el texto. */
+    function popupContent(title, detail) {
+        var container = document.createElement('div');
+        var titleElement = document.createElement('div');
+        titleElement.className = 'popup-title';
+        titleElement.textContent = title;
+        container.appendChild(titleElement);
+        if (detail) {
+            var detailElement = document.createElement('div');
+            detailElement.className = 'popup-detail';
+            detailElement.textContent = detail;
+            container.appendChild(detailElement);
+        }
+        return container;
+    }
+
+    /** Dibuja cada ruta pasando por todas sus estaciones, con el color de su línea. */
+    function drawRoutes(routes) {
+        routes.forEach(function (route) {
+            L.polyline(route.path, {color: route.color, weight: 5, opacity: 0.85})
+                .bindPopup(popupContent(route.label))
+                .addTo(dataLayer);
+        });
+    }
+
+    /** Dibuja un punto por estación, con sus líneas en la ventana emergente. */
+    function drawStations(stations) {
+        stations.forEach(function (station) {
+            var lines = station.lines.length > 0
+                ? 'Líneas: ' + station.lines.join(', ')
+                : 'Sin rutas asignadas';
+            L.circleMarker([station.lat, station.lng], {
+                radius: 7, color: '#191717', weight: 2, fillColor: '#FFFFFF', fillOpacity: 1
+            })
+                .bindPopup(popupContent(station.name, lines))
+                .addTo(dataLayer);
+        });
+    }
+
+    /** Recibe los datos de MapView y redibuja el mapa. */
+    function loadData(data) {
+        if (map === null) {
+            return;
+        }
+        dataLayer.clearLayers();
+        drawRoutes(data.routes);
+        drawStations(data.stations);
+        // Para cuando llegan los datos el panel ya tiene su tamaño final; se recalcula una sola vez.
+        map.invalidateSize({animate: false});
+        if (data.stations.length > 0) {
+            map.fitBounds(data.stations.map(function (station) {
+                return [station.lat, station.lng];
+            }), {padding: [30, 30], animate: false});
+        } else {
+            showError('Todavía no hay estaciones registradas.');
+        }
+    }
+
+    if (typeof L === 'undefined') {
+        showError('El mapa necesita conexión a internet. Revise su conexión y vuelva a abrir Vektra.');
+    } else {
+        // Sin animaciones y con canvas, porque el WebView de JavaFX las dibuja con fallos.
+        map = L.map('map', {
+            zoomAnimation: false,
+            fadeAnimation: false,
+            markerZoomAnimation: false,
+            preferCanvas: true
+        }).setView(VALLEDUPAR, INITIAL_ZOOM);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; colaboradores de OpenStreetMap'
+        }).addTo(map);
+        dataLayer = L.layerGroup().addTo(map);
+        // Ajusta el mapa cuando cambia el tamaño de la ventana, en lugar de revisarlo sin parar.
+        window.addEventListener('resize', function () {
+            map.invalidateSize({animate: false});
+        });
+    }
+</script>
+</body>
+</html>
