@@ -48,5 +48,11 @@
             <artifactId>gson</artifactId>
             <version>2.11.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.connectbot</groupId>
+            <artifactId>jbcrypt</artifactId>
+            <version>1.0.2</version>
+            <type>jar</type>
+        </dependency>
     </dependencies>
 </project>
