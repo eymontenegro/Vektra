@@ -20,7 +20,7 @@ public final class RouteFormatter {
 
     /**
      * Texto de una línea con todos los datos de la ruta, por ejemplo
-     * "Terminal → Centro | 4,5 km | 12 min | Línea Roja | Transbordos: 0".
+     * "Terminal - Centro | 4,5 km | 12 min | Línea Roja | Transbordos: 0".
      *
      * @param route ruta a mostrar
      * @return texto para combos, listas y ventanas emergentes
@@ -28,7 +28,8 @@ public final class RouteFormatter {
     public static String format(Route route) {
         // DecimalFormat no es seguro entre hilos, por eso se crea en cada llamada.
         DecimalFormat number = new DecimalFormat(NUMBER_PATTERN);
-        return route.getOriginName() + " → " + route.getDestinationName()
+        // Guion largo y no flecha: la fuente Coolvetica no tiene el símbolo →.
+        return route.getOriginName() + " – " + route.getDestinationName()
                 + " | " + number.format(route.getKilometers()) + " km"
                 + " | " + number.format(route.getTravelMinutes()) + " min"
                 + " | Línea " + route.getLineName()
