@@ -2,19 +2,18 @@ package com.vektra.view;
 
 import com.vektra.util.Styles;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Font;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.WindowConstants;
 
 /**
  * Ventana pequeña que avisa de un error. Muestra el mensaje que recibe,
  * con la mascota y un botón para cerrarla.
  */
-public class ErrorView extends JFrame {
+public class ErrorView extends BaseWindow {
 
     /** Ancho en píxeles del texto del mensaje. */
     private static final int MESSAGE_WIDTH = 280;
@@ -31,18 +30,17 @@ public class ErrorView extends JFrame {
      * @param message texto que verá la persona, en español
      */
     public ErrorView(String message) {
-        setTitle("Vektra - Error");
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        setSection("Error");
         setResizable(false);
         initComponents(message);
         pack();
-        setLocationRelativeTo(null);
+        applyStyle();
     }
 
     /** Arma los componentes de la ventana. */
     private void initComponents(String message) {
         JPanel content = new JPanel(new BorderLayout(15, 15));
-        content.setBackground(java.awt.Color.WHITE);
+        content.setBackground(Color.WHITE);
         content.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         JLabel titleLabel = new JLabel("Algo salió mal",
@@ -60,7 +58,7 @@ public class ErrorView extends JFrame {
         JButton okButton = new JButton("OK");
         okButton.setFont(Styles.font(Font.BOLD, 14f));
         okButton.setBackground(Styles.ERROR_BORDER);
-        okButton.setForeground(java.awt.Color.WHITE);
+        okButton.setForeground(Color.WHITE);
         okButton.setOpaque(true);
         okButton.setBorderPainted(false);
         okButton.setFocusPainted(false);

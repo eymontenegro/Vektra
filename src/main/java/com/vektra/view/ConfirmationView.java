@@ -6,16 +6,14 @@ import java.awt.Color;
 import java.awt.Font;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.WindowConstants;
 
 /**
  * Ventana pequeña que confirma que algo salió bien. Muestra el mensaje
  * que recibe, con la mascota y un botón para cerrarla.
  */
-public class ConfirmationView extends JFrame {
+public class ConfirmationView extends BaseWindow {
 
     /** Ancho en píxeles del texto del mensaje. */
     private static final int MESSAGE_WIDTH = 280;
@@ -32,12 +30,11 @@ public class ConfirmationView extends JFrame {
      * @param message texto que verá la persona, en español
      */
     public ConfirmationView(String message) {
-        setTitle("Vektra - Confirmación");
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        setSection("Confirmación");
         setResizable(false);
         initComponents(message);
         pack();
-        setLocationRelativeTo(null);
+        applyStyle();
     }
 
     /** Arma los componentes de la ventana. */
