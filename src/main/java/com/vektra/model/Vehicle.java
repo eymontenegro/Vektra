@@ -15,7 +15,7 @@ public class Vehicle {
     private static final int MIN_YEAR = 1900;
 
     /** Identificador del vehículo en la base de datos (0 si aún no se guarda). */
-        private int id;;
+    private int id;
 
     /** Placa del vehículo, única en el sistema. */
     private final String plate;
