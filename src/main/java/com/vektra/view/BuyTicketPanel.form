@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<Form version="1.5" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
+  <AuxValues>
+    <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
+    <AuxValue name="FormSettings_autoSetComponentName" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_generateFQN" type="java.lang.Boolean" value="true"/>
+    <AuxValue name="FormSettings_generateMnemonicsCode" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_i18nAutoMode" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_layoutCodeTarget" type="java.lang.Integer" value="1"/>
+    <AuxValue name="FormSettings_listenerGenerationStyle" type="java.lang.Integer" value="0"/>
+    <AuxValue name="FormSettings_variablesLocal" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_variablesModifier" type="java.lang.Integer" value="2"/>
+  </AuxValues>
+
+  <Layout>
+    <DimensionLayout dim="0">
+      <Group type="103" groupAlignment="0" attributes="0">
+          <Group type="102" alignment="0" attributes="0">
+              <EmptySpace min="-2" pref="40" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="lblTitle" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="lblSubtitle" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="lblPassenger" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="lblOrigin" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmbOrigin" alignment="0" min="-2" pref="420" max="-2" attributes="0"/>
+                  <Component id="lblDestination" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmbDestination" alignment="0" min="-2" pref="420" max="-2" attributes="0"/>
+                  <Component id="lblRouteInfo" alignment="0" min="-2" pref="600" max="-2" attributes="0"/>
+                  <Component id="btnBuy" alignment="0" min="-2" pref="420" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace pref="40" max="32767" attributes="0"/>
+          </Group>
+      </Group>
+    </DimensionLayout>
+    <DimensionLayout dim="1">
+      <Group type="103" groupAlignment="0" attributes="0">
+          <Group type="102" alignment="0" attributes="0">
+              <EmptySpace min="-2" pref="30" max="-2" attributes="0"/>
+              <Component id="lblTitle" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
+              <Component id="lblSubtitle" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
+              <Component id="lblPassenger" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="24" max="-2" attributes="0"/>
+              <Component id="lblOrigin" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
+              <Component id="cmbOrigin" min="-2" pref="36" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
+              <Component id="lblDestination" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
+              <Component id="cmbDestination" min="-2" pref="36" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
+              <Component id="lblRouteInfo" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="24" max="-2" attributes="0"/>
+              <Component id="btnBuy" min="-2" pref="44" max="-2" attributes="0"/>
+              <EmptySpace pref="30" max="32767" attributes="0"/>
+          </Group>
+      </Group>
+    </DimensionLayout>
+  </Layout>
+  <SubComponents>
+    <Component class="javax.swing.JLabel" name="lblTitle">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Comprar un ticket"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblSubtitle">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Elige tu origen y tu destino. El ticket llegará a tu correo."/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblPassenger">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Comprando como…"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblOrigin">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Estación de origen"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="cmbOrigin">
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;Station&gt;"/>
+      </AuxValues>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblDestination">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Estación de destino"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="cmbDestination">
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;Station&gt;"/>
+      </AuxValues>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblRouteInfo">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Elige la estación de origen y la de destino."/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="btnBuy">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Comprar ticket"/>
+      </Properties>
+    </Component>
+  </SubComponents>
+</Form>
