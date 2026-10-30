@@ -15,7 +15,7 @@ public class Vehicle {
     private static final int MIN_YEAR = 1900;
 
     /** Identificador del vehículo en la base de datos (0 si aún no se guarda). */
-    private final int id;
+        private int id;;
 
     /** Placa del vehículo, única en el sistema. */
     private final String plate;
@@ -77,6 +77,11 @@ public class Vehicle {
 
     public int getId() {
         return id;
+    }
+
+    /** Lo usa el DAO para guardar el id generado por la base de datos. */
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getPlate() {
