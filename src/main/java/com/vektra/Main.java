@@ -7,6 +7,8 @@ import com.vektra.dao.StationDao;
 import com.vektra.dao.TicketDao;
 import com.vektra.dao.UserDao;
 import com.vektra.dao.VehicleDao;
+import com.vektra.dao.DashboardDao;
+import com.vektra.service.DashboardService;
 import com.vektra.service.DriverService;
 import com.vektra.service.EmailService;
 import com.vektra.service.PassengerService;
@@ -24,6 +26,7 @@ import com.vektra.view.DriversPanel;
 import com.vektra.view.LoginFrame;
 import com.vektra.view.MainFrameView;
 import com.vektra.view.MapPanel;
+import com.vektra.view.DashboardPanel;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -75,6 +78,9 @@ public class Main {
         VehicleService vehicleService = new VehicleService(new VehicleDao());
         TicketService ticketService = new TicketService(new TicketDao(), EmailService.fromConfig());
 
+        DashboardService dashboardService = new DashboardService(new DashboardDao());
+        DashboardPanel dashboardPanel = new DashboardPanel(dashboardService);
+
         DriversPanel driversPanel = new DriversPanel(driverService);
         AddDriverPanel addDriverPanel =
                 new AddDriverPanel(driverService, routeService, driversPanel::refresh);
@@ -98,6 +104,8 @@ public class Main {
                 new MainFrameView.Section(deleteDriverPanel, deleteDriverPanel::refresh));
         sections.put("Añadir vehículo",
                 new MainFrameView.Section(addVehiclePanel, addVehiclePanel::refresh));
+
+        sections.put("Dashboard", new MainFrameView.Section(dashboardPanel, dashboardPanel::refresh));
 
         new MainFrameView(sections, Main::openLoginScreen).setVisible(true);
     }
