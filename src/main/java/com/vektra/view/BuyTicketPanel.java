@@ -8,13 +8,11 @@ import com.vektra.service.RouteService;
 import com.vektra.service.TicketService;
 import com.vektra.service.TicketService.PurchaseResult;
 import com.vektra.util.Styles;
+import com.vektra.util.TicketFormatter;
 import com.vektra.util.UserSession;
 import java.awt.Color;
 import java.awt.Font;
-import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -33,9 +31,6 @@ import javax.swing.SwingWorker;
 public class BuyTicketPanel extends javax.swing.JPanel {
 
     private static final Logger LOGGER = Logger.getLogger(BuyTicketPanel.class.getName());
-
-    /** Formato del precio en pesos colombianos, por ejemplo 2.500. */
-    private static final Locale COLOMBIA = Locale.forLanguageTag("es-CO");
 
     private static final String STATIONS_ERROR =
             "No se pudieron cargar las estaciones. Revise la conexión con la base de datos.";
@@ -211,14 +206,15 @@ public class BuyTicketPanel extends javax.swing.JPanel {
         }.execute();
     }
 
-    /**
+        /**
      * Confirma la compra con el código del ticket y avisa si el correo no salió.
      *
      * @param result ticket guardado y si se envió el correo
      */
     private void showPurchaseResult(PurchaseResult result) {
         Ticket ticket = result.ticket();
-        String message = "Compraste el ticket " + ticket.getCode() + " por " + formatPrice(ticket.getPrice()) + ".";
+        String message = "Compraste el ticket " + ticket.getCode()
+                + " por " + TicketFormatter.formatPrice(ticket.getPrice()) + ".";
         if (result.emailSent()) {
             message += " Te lo enviamos a " + ticket.getPassengerEmail() + ".";
         } else {
@@ -242,16 +238,6 @@ public class BuyTicketPanel extends javax.swing.JPanel {
         new ErrorView(UNEXPECTED_ERROR).setVisible(true);
     }
 
-    /**
-     * Da formato de pesos colombianos al precio, por ejemplo $2.500.
-     *
-     * @param price precio del ticket
-     * @return precio listo para mostrar
-     */
-    private static String formatPrice(BigDecimal price) {
-        NumberFormat format = NumberFormat.getIntegerInstance(COLOMBIA);
-        return "$" + format.format(price);
-    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
