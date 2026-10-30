@@ -1,56 +1,71 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-<modelVersion>4.0.0</modelVersion>
-<groupId>com.vektra</groupId>
-<artifactId>Vektra</artifactId>
-<version>1.0-SNAPSHOT</version>
-<packaging>jar</packaging>
-<properties>
-<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-<maven.compiler.release>25</maven.compiler.release>
-<exec.mainClass>com.vektra.Main</exec.mainClass>
-<javafx.version>25.0.1</javafx.version>
-<postgresql.version>42.7.11</postgresql.version>
-</properties>
-<dependencies>
-<!--  PostgreSQL  -->
-<dependency>
-<groupId>org.postgresql</groupId>
-<artifactId>postgresql</artifactId>
-<version>${postgresql.version}</version>
-</dependency>
-<!--  JavaFX  -->
-<dependency>
-<groupId>org.openjfx</groupId>
-<artifactId>javafx-controls</artifactId>
-<version>${javafx.version}</version>
-</dependency>
-<dependency>
-<groupId>org.openjfx</groupId>
-<artifactId>javafx-swing</artifactId>
-<version>${javafx.version}</version>
-</dependency>
-<dependency>
-<groupId>org.openjfx</groupId>
-<artifactId>javafx-web</artifactId>
-<version>${javafx.version}</version>
-</dependency>
-<!--  Email  -->
-<dependency>
-<groupId>org.eclipse.angus</groupId>
-<artifactId>angus-mail</artifactId>
-<version>2.0.3</version>
-</dependency>
-<!--  BCrypt  -->
-<dependency>
-<groupId>org.mindrot</groupId>
-<artifactId>jbcrypt</artifactId>
-<version>0.4</version>
-</dependency>
-<!--  Gson  -->
-<dependency>
-<groupId>com.google.code.gson</groupId>
-<artifactId>gson</artifactId>
-<version>2.11.0</version>
-</dependency>
-</dependencies>
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.vektra</groupId>
+    <artifactId>Vektra</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>25</maven.compiler.release>
+        <exec.mainClass>com.vektra.Main</exec.mainClass>
+        <javafx.version>25.0.1</javafx.version>
+        <postgresql.version>42.7.11</postgresql.version>
+    </properties>
+
+    <dependencies>
+
+        <!-- PostgreSQL -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
+        </dependency>
+
+        <!-- JavaFX -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-web</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <!-- Email -->
+        <dependency>
+            <groupId>org.eclipse.angus</groupId>
+            <artifactId>angus-mail</artifactId>
+            <version>2.0.3</version>
+        </dependency>
+
+        <!-- BCrypt -->
+        <dependency>
+            <groupId>org.mindrot</groupId>
+            <artifactId>jbcrypt</artifactId>
+            <version>0.4</version>
+        </dependency>
+
+        <!-- Gson -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.11.0</version>
+        </dependency>
+
+    </dependencies>
 </project>
