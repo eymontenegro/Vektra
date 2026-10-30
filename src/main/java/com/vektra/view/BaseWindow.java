@@ -1,6 +1,7 @@
 package com.vektra.view;
 
 import java.awt.Color;
+import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 import com.vektra.util.FontUtil;
 
