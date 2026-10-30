@@ -12,6 +12,7 @@ import com.vektra.util.TicketFormatter;
 import com.vektra.util.UserSession;
 import java.awt.Color;
 import java.awt.Font;
+import static java.time.zone.ZoneRulesProvider.refresh;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -61,8 +62,7 @@ public class BuyTicketPanel extends javax.swing.JPanel {
         cmbOrigin.addActionListener(event -> showRouteInfo());
         cmbDestination.addActionListener(event -> showRouteInfo());
         btnBuy.addActionListener(event -> buyTicket());
-        showPassenger();
-        loadStations();
+        refresh();
     }
 
     /** Da a los textos y al botón la fuente y los colores de Vektra. */
@@ -86,19 +86,25 @@ public class BuyTicketPanel extends javax.swing.JPanel {
         Styles.styleButton(btnBuy);
     }
 
-    /** Muestra quién está comprando, o bloquea la compra si no hay pasajero. */
+        /** Muestra quién está comprando, o bloquea la compra si no hay pasajero. */
     private void showPassenger() {
         try {
             Passenger passenger = UserSession.getActivePassenger();
             lblPassenger.setText("Comprando como " + passenger.getFullName() + " (" + passenger.getEmail() + ")");
+            btnBuy.setEnabled(true);
         } catch (IllegalStateException e) {
             lblPassenger.setText("Inicia sesión como pasajero para comprar.");
             btnBuy.setEnabled(false);
         }
     }
 
-    /** Carga las estaciones en los dos combos sin congelar la pantalla. */
-    private void loadStations() {
+        /**
+     * Vuelve a leer el pasajero de la sesión y a cargar las estaciones sin
+     * congelar la pantalla. La ventana principal lo llama cada vez que muestra
+     * esta pantalla, por si la sesión o las estaciones cambiaron.
+     */
+    public void refresh() {
+        showPassenger();
         new SwingWorker<List<Station>, Void>() {
             @Override
             protected List<Station> doInBackground() throws Exception {
