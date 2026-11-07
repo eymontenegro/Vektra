@@ -17,3 +17,5 @@ buildNumber.properties
 .classpath
 config.properties
 target/
+codeblock
+nb-configuration.xml
