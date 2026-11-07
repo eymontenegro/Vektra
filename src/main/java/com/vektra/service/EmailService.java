@@ -147,8 +147,25 @@ public class EmailService {
                 .replace("'", "&#39;");
     }
 
+        /**
+     * Carga config.properties: primero como recurso del classpath (se
+     * encuentra sin importar desde qué carpeta se ejecute la app) y, si no
+     * está ahí, como archivo en el directorio de trabajo. Si no existe en
+     * ninguno de los dos lugares devuelve una configuración vacía y las
+     * credenciales se buscan en las variables de entorno.
+     */
     private static Properties loadConfig() {
         Properties config = new Properties();
+        try (InputStream resource = EmailService.class
+                .getClassLoader()
+                .getResourceAsStream(CONFIG_FILE)) {
+            if (resource != null) {
+                config.load(resource);
+                return config;
+            }
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "No se pudo leer el recurso " + CONFIG_FILE, e);
+        }
         Path file = Path.of(CONFIG_FILE);
         if (Files.exists(file)) {
             try (InputStream in = Files.newInputStream(file)) {
@@ -159,6 +176,7 @@ public class EmailService {
         }
         return config;
     }
+
 
     private static String readSetting(Properties config, String envName, String key) {
         String fromEnv = System.getenv(envName);
