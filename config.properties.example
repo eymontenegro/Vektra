@@ -3,5 +3,3 @@ db.user=postgres
 db.password=CAMBIAR
 mail.sender=correo@gmail.com
 mail.password=CAMBIAR
-mail.sender= 
-mail.password=
