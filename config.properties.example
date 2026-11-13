@@ -1,5 +1,7 @@
 db.url=jdbc:postgresql://localhost:5432/Vektra
-db.user=postgres
+db.user=vektra_app
 db.password=CAMBIAR
 mail.sender=correo@gmail.com
 mail.password=CAMBIAR
+server.port=7070
+server.dev=false
