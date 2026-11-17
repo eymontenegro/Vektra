@@ -1,23 +1,32 @@
 -- =========================================================
 -- VEKTRA - Sistema de Metro Inteligente
--- Script de base de datos (PostgreSQL)
+-- Script de base de datos (PostgreSQL 14 o superior) - versión 2
 --
 -- ADVERTENCIA: elimina y recrea todas las tablas del proyecto.
--- No lo ejecutes en una base de datos con datos que quieras conservar.
+-- No lo ejecute en una base de datos con datos que quiera conservar.
+-- Para una base que ya existe use DataBase/migrations/V2__integrity_indexes_views.sql.
 --
 -- Tablas: users, drivers, vehicles, stations, routes,
 --         route_stations y tickets.
--- Los nombres de tablas y columnas coinciden con StationDao,
--- RouteDao, DashboardDao y las clases del modelo.
--- Los datos de las secciones 11 a 14 son de prueba.
+-- Los nombres de tablas y columnas coinciden con los DAO y el modelo.
+-- Los datos de las secciones 10 a 14 son de prueba.
+--
+-- Ejecutar:
+--   psql -U postgres -d Vektra -v ON_ERROR_STOP=1 -f DataBase/vektra.sql
+-- Todo va en una sola transacción que termina con COMMIT (la versión 1
+-- abría BEGIN y nunca hacía COMMIT, así que psql descartaba todo).
 -- =========================================================
 
 BEGIN;
 
 -- =========================================================
--- 1. ELIMINAR TABLAS (primero las dependientes)
+-- 1. ELIMINAR OBJETOS (primero los dependientes)
 -- =========================================================
 
+DROP VIEW IF EXISTS v_dashboard_totals;
+DROP VIEW IF EXISTS v_ticket_sales_by_origin;
+DROP VIEW IF EXISTS v_driver_assignments;
+DROP VIEW IF EXISTS v_route_summary;
 DROP TABLE IF EXISTS tickets CASCADE;
 DROP TABLE IF EXISTS route_stations CASCADE;
 DROP TABLE IF EXISTS routes CASCADE;
@@ -25,12 +34,16 @@ DROP TABLE IF EXISTS stations CASCADE;
 DROP TABLE IF EXISTS vehicles CASCADE;
 DROP TABLE IF EXISTS drivers CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+DROP FUNCTION IF EXISTS fn_check_route_station();
+DROP FUNCTION IF EXISTS fn_check_route_endpoints();
+DROP FUNCTION IF EXISTS fn_check_vehicle_line();
+DROP FUNCTION IF EXISTS fn_check_driver_route_line();
 
 -- =========================================================
 -- 2. USERS
--- Administrador y pasajeros.
--- El administrador no tiene cédula, apellido ni fecha de nacimiento,
--- por eso esas columnas aceptan NULL.
+-- Administrador y pasajeros (los conductores no inician sesión y
+-- viven en drivers). El administrador no tiene cédula, apellido ni
+-- fecha de nacimiento; el pasajero siempre los tiene.
 -- La columna password guarda el hash BCrypt, nunca texto plano.
 -- =========================================================
 
@@ -50,16 +63,23 @@ CREATE TABLE users (
     CONSTRAINT uq_users_national_id UNIQUE (national_id),
     -- Los servicios guardan el correo en minúsculas.
     CONSTRAINT chk_users_email_lower CHECK (email = lower(email)),
-    -- Mismos valores que el enum Role.
-    CONSTRAINT chk_users_role CHECK (role IN ('ADMIN', 'PASSENGER', 'DRIVER'))
+    CONSTRAINT chk_users_email_format CHECK (email ~ '^[^@\s]+@[^@\s]+\.[^@\s]+$'),
+    -- Mismos valores que el enum Role que pueden iniciar sesión.
+    CONSTRAINT chk_users_role CHECK (role IN ('ADMIN', 'PASSENGER')),
+    CONSTRAINT chk_users_passenger_data CHECK (
+        role <> 'PASSENGER'
+        OR (national_id IS NOT NULL AND last_name IS NOT NULL AND birth_date IS NOT NULL)),
+    -- Misma regla que PassengerService: entre 6 y 12 dígitos.
+    CONSTRAINT chk_users_national_id CHECK (national_id ~ '^[0-9]{6,12}$'),
+    -- Que no sea futura lo valida PassengerService: un CHECK no debe
+    -- depender de la fecha actual.
+    CONSTRAINT chk_users_birth_date CHECK (birth_date IS NULL OR birth_date >= DATE '1900-01-01')
 );
 
 -- =========================================================
 -- 3. DRIVERS
--- Los conductores no inician sesión, por eso no dependen de users.
--- Campos de Person (id, nationalId, name, lastName)
--- más licencia, teléfono, estado y la ruta asignada.
--- La ruta se guarda por su id, no por su texto.
+-- Campos de Person más licencia, teléfono, estado y la ruta asignada
+-- (por su id). La llave foránea a routes se agrega en la sección 6.
 -- =========================================================
 
 CREATE TABLE drivers (
@@ -75,13 +95,16 @@ CREATE TABLE drivers (
     CONSTRAINT pk_drivers PRIMARY KEY (id),
     CONSTRAINT uq_drivers_national_id UNIQUE (national_id),
     CONSTRAINT uq_drivers_license UNIQUE (license_number),
-    CONSTRAINT chk_drivers_status CHECK (status IN ('ACTIVE', 'INACTIVE'))
+    -- Mismos valores que el enum DriverStatus.
+    CONSTRAINT chk_drivers_status CHECK (status IN ('ACTIVE', 'INACTIVE')),
+    CONSTRAINT chk_drivers_national_id CHECK (national_id ~ '^[0-9]{6,12}$'),
+    CONSTRAINT chk_drivers_phone CHECK (phone ~ '^[0-9]{7,15}$')
 );
 
 -- =========================================================
 -- 4. VEHICLES
 -- La línea se guarda con el nombre de la constante de LineColor
--- (RED, BLUE, GREEN, YELLOW) y el conductor por su id en drivers.
+-- y el conductor por su id en drivers.
 -- =========================================================
 
 CREATE TABLE vehicles (
@@ -102,6 +125,10 @@ CREATE TABLE vehicles (
     CONSTRAINT fk_vehicles_driver FOREIGN KEY (driver_id) REFERENCES drivers(id)
 );
 
+-- =========================================================
+-- 5. STATIONS
+-- =========================================================
+
 CREATE TABLE stations (
     id        BIGINT GENERATED BY DEFAULT AS IDENTITY,
     name      VARCHAR(120)     NOT NULL,
@@ -116,10 +143,9 @@ CREATE TABLE stations (
 
 -- =========================================================
 -- 6. ROUTES
--- Columnas que lee RouteDao.
 -- line_color guarda el nombre de la constante de LineColor.
--- travel_minutes y kilometers deben ser mayores que cero,
--- igual que valida la clase Route.
+-- travel_minutes y kilometers deben ser mayores que cero, igual que
+-- valida la clase Route.
 -- =========================================================
 
 CREATE TABLE routes (
@@ -136,6 +162,8 @@ CREATE TABLE routes (
         FOREIGN KEY (origin_station_id) REFERENCES stations(id),
     CONSTRAINT fk_routes_destination
         FOREIGN KEY (destination_station_id) REFERENCES stations(id),
+    CONSTRAINT uq_routes_origin_destination_line
+        UNIQUE (origin_station_id, destination_station_id, line_color),
     CONSTRAINT chk_routes_line_color
         CHECK (line_color IN ('RED', 'BLUE', 'GREEN', 'YELLOW')),
     CONSTRAINT chk_routes_different_stations
@@ -144,15 +172,14 @@ CREATE TABLE routes (
     CONSTRAINT chk_routes_kilometers CHECK (kilometers > 0),
     CONSTRAINT chk_routes_transfers CHECK (transfers >= 0)
 );
--- La ruta asignada del conductor se agrega aquí porque routes se crea
--- después de drivers y la llave foránea no puede ir en la sección 3.
+
+-- La ruta del conductor se agrega aquí porque routes se crea después de drivers.
 ALTER TABLE drivers
     ADD CONSTRAINT fk_drivers_route FOREIGN KEY (route_id) REFERENCES routes(id);
 
 -- =========================================================
 -- 7. ROUTE_STATIONS
--- Estaciones intermedias de cada ruta, en orden de recorrido
--- (RouteDao las ordena por position).
+-- Estaciones intermedias de cada ruta, en orden de recorrido.
 -- =========================================================
 
 CREATE TABLE route_stations (
@@ -161,6 +188,7 @@ CREATE TABLE route_stations (
     position   SMALLINT NOT NULL,
 
     CONSTRAINT pk_route_stations PRIMARY KEY (route_id, position),
+    CONSTRAINT uq_route_stations_route_station UNIQUE (route_id, station_id),
     CONSTRAINT fk_route_stations_route
         FOREIGN KEY (route_id) REFERENCES routes(id) ON DELETE CASCADE,
     CONSTRAINT fk_route_stations_station
@@ -170,9 +198,10 @@ CREATE TABLE route_stations (
 
 -- =========================================================
 -- 8. TICKETS
--- El ticket va entre dos estaciones y no tiene ruta ni asiento.
--- No se usa ON DELETE CASCADE: el historial de compras no se
--- borra sin querer.
+-- El ticket va entre dos estaciones. No se usa ON DELETE CASCADE: el
+-- historial de compras no se borra sin querer. El precio se guarda en
+-- cada ticket porque es el precio pagado ese día (no es redundancia:
+-- la tarifa puede cambiar después).
 -- =========================================================
 
 CREATE TABLE tickets (
@@ -200,12 +229,125 @@ CREATE TABLE tickets (
 -- =========================================================
 -- 9. ÍNDICES
 -- Las restricciones UNIQUE y PRIMARY KEY ya crean los suyos.
--- Este cubre la búsqueda de tickets por pasajero, ordenados
--- por fecha descendente.
+-- PostgreSQL NO crea índices para las llaves foráneas: se crean aquí.
 -- =========================================================
 
-CREATE INDEX idx_tickets_passenger_date
-    ON tickets (passenger_id, purchase_date DESC);
+-- Tickets de un pasajero, del más reciente al más antiguo (Mis tickets).
+CREATE INDEX idx_tickets_passenger_date ON tickets (passenger_id, purchase_date DESC);
+CREATE INDEX idx_tickets_origin ON tickets (origin_station_id);
+CREATE INDEX idx_tickets_destination ON tickets (destination_station_id);
+CREATE INDEX idx_tickets_purchase_date ON tickets (purchase_date);
+CREATE INDEX idx_drivers_route ON drivers (route_id);
+CREATE INDEX idx_vehicles_driver ON vehicles (driver_id);
+-- routes.origin_station_id lo cubre uq_routes_origin_destination_line.
+CREATE INDEX idx_routes_destination ON routes (destination_station_id);
+CREATE INDEX idx_route_stations_station ON route_stations (station_id);
+
+-- =========================================================
+-- 9b. TRIGGERS
+-- Una restricción CHECK no puede mirar otra tabla: por eso las reglas que
+-- comparan dos tablas (paradas de una ruta, línea del vehículo) son triggers.
+-- =========================================================
+
+CREATE OR REPLACE FUNCTION fn_check_route_station()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    route_origin      BIGINT;
+    route_destination BIGINT;
+BEGIN
+    SELECT origin_station_id, destination_station_id
+    INTO route_origin, route_destination
+    FROM routes
+    WHERE id = NEW.route_id;
+
+    IF NEW.station_id IN (route_origin, route_destination) THEN
+        RAISE EXCEPTION 'La parada intermedia no puede ser el origen ni el destino de la ruta %.', NEW.route_id
+            USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_route_stations_check ON route_stations;
+CREATE TRIGGER trg_route_stations_check
+    BEFORE INSERT OR UPDATE ON route_stations
+    FOR EACH ROW EXECUTE FUNCTION fn_check_route_station();
+
+-- Si se cambia el origen o el destino de una ruta, sus paradas
+-- intermedias tienen que seguir siendo válidas.
+CREATE OR REPLACE FUNCTION fn_check_route_endpoints()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM route_stations
+               WHERE route_id = NEW.id
+                 AND station_id IN (NEW.origin_station_id, NEW.destination_station_id)) THEN
+        RAISE EXCEPTION 'La ruta % ya tiene esa estación como parada intermedia.', NEW.id
+            USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_routes_check_endpoints ON routes;
+CREATE TRIGGER trg_routes_check_endpoints
+    BEFORE UPDATE OF origin_station_id, destination_station_id ON routes
+    FOR EACH ROW EXECUTE FUNCTION fn_check_route_endpoints();
+
+-- Regla del negocio (decidida por el equipo): un vehículo circula en la
+-- línea de la ruta de su conductor. vehicles.line se conserva, pero ya no
+-- puede contradecir esa línea (evita la anomalía de la dependencia
+-- transitiva driver_id -> route_id -> line_color).
+-- Al guardar un vehículo, su línea debe ser la de la ruta del conductor.
+CREATE OR REPLACE FUNCTION fn_check_vehicle_line()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    driver_line VARCHAR(20);
+BEGIN
+    SELECT r.line_color INTO driver_line
+    FROM drivers dr
+    JOIN routes r ON r.id = dr.route_id
+    WHERE dr.id = NEW.driver_id;
+
+    IF driver_line IS NOT NULL AND NEW.line <> driver_line THEN
+        RAISE EXCEPTION 'El vehículo % debe circular en la línea % de su conductor.', NEW.plate, driver_line
+            USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_vehicles_check_line ON vehicles;
+CREATE TRIGGER trg_vehicles_check_line
+    BEFORE INSERT OR UPDATE OF line, driver_id ON vehicles
+    FOR EACH ROW EXECUTE FUNCTION fn_check_vehicle_line();
+
+-- Al cambiar la ruta de un conductor, sus vehículos deben seguir en la misma línea.
+CREATE OR REPLACE FUNCTION fn_check_driver_route_line()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF EXISTS (SELECT 1
+               FROM vehicles v
+               JOIN routes r ON r.id = NEW.route_id
+               WHERE v.driver_id = NEW.id AND v.line <> r.line_color) THEN
+        RAISE EXCEPTION 'El conductor % tiene vehículos en otra línea; reasígnelos primero.', NEW.id
+            USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_drivers_check_route_line ON drivers;
+CREATE TRIGGER trg_drivers_check_route_line
+    BEFORE UPDATE OF route_id ON drivers
+    FOR EACH ROW EXECUTE FUNCTION fn_check_driver_route_line();
 
 -- =========================================================
 -- 10. CUENTA DEL ADMINISTRADOR
@@ -321,8 +463,67 @@ FROM (VALUES
 ) AS v(plate, brand, model, year, capacity, line, license_number)
 JOIN drivers dr ON dr.license_number = v.license_number;
 
+
 -- =========================================================
--- 15. VERIFICACIÓN
+-- 15. VISTAS (dashboard y reportes)
+-- =========================================================
+
+-- Resumen de cada ruta con los nombres de sus estaciones.
+CREATE OR REPLACE VIEW v_route_summary AS
+SELECT r.id                AS route_id,
+       r.line_color,
+       o.name              AS origin_name,
+       d.name              AS destination_name,
+       COUNT(rs.station_id) AS intermediate_stops,
+       r.travel_minutes,
+       r.kilometers,
+       r.transfers
+FROM routes r
+JOIN stations o ON o.id = r.origin_station_id
+JOIN stations d ON d.id = r.destination_station_id
+LEFT JOIN route_stations rs ON rs.route_id = r.id
+GROUP BY r.id, r.line_color, o.name, d.name, r.travel_minutes, r.kilometers, r.transfers;
+
+-- Conductores con su ruta y cuántos vehículos tienen asignados.
+CREATE OR REPLACE VIEW v_driver_assignments AS
+SELECT dr.id               AS driver_id,
+       dr.national_id,
+       dr.name,
+       dr.last_name,
+       dr.status,
+       r.id                AS route_id,
+       r.line_color        AS route_line,
+       COUNT(v.id)         AS vehicle_count
+FROM drivers dr
+JOIN routes r ON r.id = dr.route_id
+LEFT JOIN vehicles v ON v.driver_id = dr.id
+GROUP BY dr.id, dr.national_id, dr.name, dr.last_name, dr.status, r.id, r.line_color;
+
+-- Tickets vendidos y dinero recaudado por estación de origen.
+CREATE OR REPLACE VIEW v_ticket_sales_by_origin AS
+SELECT s.id                       AS station_id,
+       s.name                     AS station_name,
+       COUNT(t.id)                AS tickets_sold,
+       COALESCE(SUM(t.price), 0)  AS revenue
+FROM stations s
+LEFT JOIN tickets t ON t.origin_station_id = s.id
+GROUP BY s.id, s.name;
+
+-- Totales del sistema en una sola fila, para el dashboard.
+CREATE OR REPLACE VIEW v_dashboard_totals AS
+SELECT (SELECT COUNT(*) FROM drivers)                          AS total_drivers,
+       (SELECT COUNT(*) FROM drivers WHERE status = 'ACTIVE')  AS active_drivers,
+       (SELECT COUNT(*) FROM vehicles)                         AS total_vehicles,
+       (SELECT COUNT(*) FROM stations)                         AS total_stations,
+       (SELECT COUNT(*) FROM routes)                           AS total_routes,
+       (SELECT COUNT(*) FROM users WHERE role = 'PASSENGER')   AS total_passengers,
+       (SELECT COUNT(*) FROM tickets)                          AS total_tickets,
+       (SELECT COALESCE(SUM(price), 0) FROM tickets)           AS total_revenue;
+
+COMMIT;
+
+-- =========================================================
+-- 16. VERIFICACIÓN
 -- Resultado esperado: 1 administrador, 8 estaciones, 4 rutas,
 -- 7 paradas intermedias, 2 conductores, 2 vehículos.
 -- =========================================================
