@@ -1,5 +1,7 @@
 db.url=jdbc:postgresql://localhost:5432/Vektra
 db.user=postgres
-db.password=1234
-mail.sender=xaviacostamaldonado@gmail.com
-mail.password=zadktuhuoveeldxt
+db.password=CAMBIAR
+mail.sender=correo@gmail.com
+mail.password=CAMBIAR
+mail.sender= 
+mail.password=
