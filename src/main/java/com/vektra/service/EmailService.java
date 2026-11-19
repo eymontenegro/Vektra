@@ -1,5 +1,5 @@
 package com.vektra.service;
-
+import com.vektra.config.AppConfig;
 import com.vektra.model.Ticket;
 import com.vektra.util.TicketFormatter;
 import jakarta.mail.Authenticator;
@@ -10,52 +10,47 @@ import jakarta.mail.Session;
 import jakarta.mail.Transport;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 /**
  * Envía el ticket por correo (Gmail SMTP). Las credenciales nunca van en el
- * código: salen de las variables de entorno {@code MAIL_SENDER} y
- * {@code MAIL_PASSWORD}, o de {@code mail.sender} y {@code mail.password} en
- * {@code config.properties}.
+ * código: salen de AppConfig (variables de entorno {@code MAIL_SENDER} y
+ * {@code MAIL_PASSWORD}, o {@code mail.sender} y {@code mail.password} en
+ * {@code config.properties}).
  * <p>
- * El envío es lento: se debe llamar fuera del hilo de la interfaz.
+ * El envío tarda unos segundos; si falla, la compra del ticket sigue siendo válida.
  */
 public class EmailService {
-
     private static final Logger LOGGER = Logger.getLogger(EmailService.class.getName());
-    private static final String CONFIG_FILE = "config.properties";
-
     private final String senderEmail;
     private final String senderPassword;
-
     /**
      * @param senderEmail    correo remitente
      * @param senderPassword contraseña de aplicación del remitente
      */
     public EmailService(String senderEmail, String senderPassword) {
-        this.senderEmail = senderEmail;
-        this.senderPassword = senderPassword;
+        this.senderEmail = senderEmail == null ? "" : senderEmail.trim();
+        this.senderPassword = senderPassword == null ? "" : senderPassword.trim();
     }
-
-    /** Crea el servicio leyendo las credenciales de la configuración. */
+    /**
+     * Crea el servicio leyendo las credenciales de AppConfig. Si no están
+     * configuradas, el servicio se crea igual y send() devuelve false.
+     *
+     * @return servicio listo para usar
+     */
     public static EmailService fromConfig() {
-        Properties config = loadConfig();
+        AppConfig config = AppConfig.global();
         return new EmailService(
-                readSetting(config, "MAIL_SENDER", "mail.sender"),
-                readSetting(config, "MAIL_PASSWORD", "mail.password"));
+                config.get("mail.sender").orElse(""),
+                config.get("mail.password").orElse(""));
     }
-
     /**
      * Envía el ticket al correo del pasajero.
+     *
+     * @param ticket ticket ya guardado
      *
      * @return true si el correo salió; false si falta configuración o falló el envío
      */
@@ -77,7 +72,7 @@ public class EmailService {
             return false;
         }
     }
-
+    /** Configuración SMTP de Gmail con STARTTLS. */
     private Session createSession() {
         Properties props = new Properties();
         props.put("mail.smtp.host", "smtp.gmail.com");
@@ -91,19 +86,19 @@ public class EmailService {
             }
         });
     }
-
     /** Arma el HTML del correo con tablas y estilos en línea (los clientes de correo ignoran flexbox). */
     private String buildContent(Ticket ticket) {
         NumberFormat money = NumberFormat.getCurrencyInstance(Locale.of("es", "CO"));
         money.setMaximumFractionDigits(0);
-
         return """
                 <!DOCTYPE html>
                 <html lang="es">
                 <head><meta charset="UTF-8"></head>
                 <body style="margin:0;padding:20px;background:#1a1a2e;font-family:Arial,sans-serif;">
-                <table align="center" width="420" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;">
-                  <tr><td style="background:#f39c12;color:#ffffff;padding:24px;text-align:center;border-radius:16px 16px 0 0;">
+                <table align="center" width="420" cellpadding="0" cellspacing="0" 
+style="background:#ffffff;border-radius:16px;">
+                  <tr><td style="background:#f39c12;color:#ffffff;padding:24px;text-align:center;border
+radius:16px 16px 0 0;">
                     <h2 style="margin:0;">Vektra</h2>
                     <p style="margin:4px 0 0;">Sistema de Metro Inteligente</p>
                   </td></tr>
@@ -135,7 +130,7 @@ public class EmailService {
                 escapeHtml(ticket.getCode()),
                 escapeHtml(money.format(ticket.getPrice())));
     }
-
+    /** Escapa los símbolos especiales para que el texto no se tome como HTML. */
     private String escapeHtml(String text) {
         if (text == null) {
             return "";
@@ -145,44 +140,5 @@ public class EmailService {
                 .replace(">", "&gt;")
                 .replace("\"", "&quot;")
                 .replace("'", "&#39;");
-    }
-
-        /**
-     * Carga config.properties: primero como recurso del classpath (se
-     * encuentra sin importar desde qué carpeta se ejecute la app) y, si no
-     * está ahí, como archivo en el directorio de trabajo. Si no existe en
-     * ninguno de los dos lugares devuelve una configuración vacía y las
-     * credenciales se buscan en las variables de entorno.
-     */
-    private static Properties loadConfig() {
-        Properties config = new Properties();
-        try (InputStream resource = EmailService.class
-                .getClassLoader()
-                .getResourceAsStream(CONFIG_FILE)) {
-            if (resource != null) {
-                config.load(resource);
-                return config;
-            }
-        } catch (IOException e) {
-            LOGGER.log(Level.WARNING, "No se pudo leer el recurso " + CONFIG_FILE, e);
-        }
-        Path file = Path.of(CONFIG_FILE);
-        if (Files.exists(file)) {
-            try (InputStream in = Files.newInputStream(file)) {
-                config.load(in);
-            } catch (IOException e) {
-                LOGGER.log(Level.WARNING, "No se pudo leer " + CONFIG_FILE, e);
-            }
-        }
-        return config;
-    }
-
-
-    private static String readSetting(Properties config, String envName, String key) {
-        String fromEnv = System.getenv(envName);
-        if (fromEnv != null && !fromEnv.isBlank()) {
-            return fromEnv.trim();
-        }
-        return config.getProperty(key, "").trim();
     }
 }
