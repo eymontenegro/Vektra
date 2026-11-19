@@ -1,29 +1,38 @@
 package com.vektra.service;
-
 import com.vektra.dao.VehicleDao;
+import com.vektra.exception.DataAccessException;
+import com.vektra.exception.NotFoundException;
+import com.vektra.exception.ValidationException;
 import com.vektra.model.Driver;
 import com.vektra.model.LineColor;
 import com.vektra.model.Vehicle;
-import com.vektra.util.UserSession;
+import com.vektra.security.AccessControl;
+import com.vektra.security.SessionUser;
+import com.vektra.util.InputValidator;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Locale;
-
+import java.util.logging.Level;
+import java.util.logging.Logger;
 /**
- * Reglas de negocio de los vehículos. Las vistas solo hablan con esta clase.
+ * Reglas de negocio de los vehículos. Los controladores solo hablan con esta clase.
  *
- * Agregar, editar y borrar son del administrador: el Service vuelve a
- * comprobar el rol de la sesión, porque ocultar un botón no es seguridad.
- * Lanza IllegalArgumentException si los datos no son válidos y
- * SecurityException si el rol no tiene permiso.
+ * Todas las operaciones son del administrador: cada método recibe quién lo
+ * pide y comprueba el permiso. Lanza ValidationException si los datos no son
+ * válidos, AuthorizationException si no hay permiso y DataAccessException si
+ * falla la base de datos.
  */
 public class VehicleService {
-
     /** Largo máximo de la placa, igual que la columna plate. */
     private static final int MAX_PLATE_LENGTH = 15;
-
+    /** Largo máximo de marca y modelo, igual que las columnas brand y model. */
+    private static final int MAX_BRAND_MODEL_LENGTH = 60;
+    private static final String UNIQUE_VIOLATION = "23505";
+    private static final String FOREIGN_KEY_VIOLATION = "23503";
+    private static final String CHECK_VIOLATION = "23514";
+    private static final Logger LOGGER = Logger.getLogger(VehicleService.class.getName());
     /** Acceso a los vehículos en la base de datos. */
     private final VehicleDao vehicleDao;
-
     /**
      * Crea el servicio con el DAO que usará.
      *
@@ -32,10 +41,44 @@ public class VehicleService {
     public VehicleService(VehicleDao vehicleDao) {
         this.vehicleDao = vehicleDao;
     }
-
+    /**
+     * Lista los vehículos registrados con su conductor.
+     *
+     * @param actor usuario de la sesión
+     * @return vehículos ordenados por placa
+     */
+    public List<Vehicle> getVehicles(SessionUser actor) {
+        AccessControl.requireFleetManager(actor);
+        try {
+            return vehicleDao.findAll();
+        } catch (SQLException e) {
+            throw failure("No se pudo cargar la lista de vehículos.", e);
+        }
+    }
+    /**
+     * Busca un vehículo por su id.
+     *
+     * @param actor     usuario de la sesión
+     * @param vehicleId id del vehículo
+     * @return el vehículo
+     * @throws NotFoundException si no existe
+     */
+    public Vehicle getVehicle(SessionUser actor, int vehicleId) {
+        AccessControl.requireFleetManager(actor);
+        try {
+            Vehicle vehicle = vehicleDao.findById(vehicleId);
+            if (vehicle == null) {
+                throw new NotFoundException("El vehículo seleccionado no existe.");
+            }
+            return vehicle;
+        } catch (SQLException e) {
+            throw failure("No se pudo cargar el vehículo.", e);
+        }
+    }
     /**
      * Registra un vehículo nuevo.
      *
+     * @param actor    usuario de la sesión
      * @param plate    placa, obligatoria y única
      * @param brand    marca; si viene vacía se guarda sin marca
      * @param model    modelo; si viene vacío se guarda sin modelo
@@ -43,122 +86,121 @@ public class VehicleService {
      * @param capacity capacidad mayor que cero
      * @param line     línea en la que circula
      * @param driver   conductor existente
-     * @return true si se guardó
-     * @throws IllegalArgumentException si algún dato no es válido o la placa está repetida
-     * @throws SecurityException        si quien tiene la sesión no es administrador
-     * @throws SQLException             si falla la base de datos
+     * @return el vehículo guardado, con su id
      */
-    public boolean addVehicle(String plate, String brand, String model, int year,
-            int capacity, LineColor line, Driver driver) throws SQLException {
-        requireAdmin();
+    public Vehicle addVehicle(SessionUser actor, String plate, String brand, String model, int year,
+            int capacity, LineColor line, Driver driver) {
+        AccessControl.requireFleetManager(actor);
         Vehicle vehicle = buildVehicle(0, plate, brand, model, year, capacity, line, driver);
-        if (vehicleDao.existsByPlate(vehicle.getPlate())) {
-            throw new IllegalArgumentException("Ya existe un vehículo con esa placa.");
+        try {
+            requireDriverExists(driver);
+            if (vehicleDao.existsByPlate(vehicle.getPlate())) {
+                throw new ValidationException("Ya existe un vehículo con esa placa.");
+            }
+            if (!vehicleDao.save(vehicle)) {
+                throw new DataAccessException("No se pudo guardar el vehículo. Intenta de nuevo.", null);
+            }
+            return vehicle;
+        } catch (SQLException e) {
+            throw translate(e, "No se pudo guardar el vehículo.");
         }
-        return vehicleDao.save(vehicle);
     }
-
     /**
      * Cambia los datos de un vehículo existente.
      *
-     * @param id       id del vehículo a editar
-     * @param plate    placa, obligatoria y única
-     * @param brand    marca; si viene vacía se guarda sin marca
-     * @param model    modelo; si viene vacío se guarda sin modelo
-     * @param year     año de fabricación válido
-     * @param capacity capacidad mayor que cero
-     * @param line     línea en la que circula
-     * @param driver   conductor existente
-     * @return true si se actualizó
-     * @throws IllegalArgumentException si el vehículo no existe, algún dato no es válido
-     *                                  o la placa nueva ya está en uso
-     * @throws SecurityException        si quien tiene la sesión no es administrador
-     * @throws SQLException             si falla la base de datos
+     * @param actor     usuario de la sesión
+     * @param vehicleId id del vehículo a editar
+     * @param plate     placa, obligatoria y única
+     * @param brand     marca; si viene vacía se guarda sin marca
+     * @param model     modelo; si viene vacío se guarda sin modelo
+     * @param year      año de fabricación válido
+     * @param capacity  capacidad mayor que cero
+     * @param line      línea en la que circula
+     * @param driver    conductor existente
+     * @throws NotFoundException si el vehículo no existe
      */
-    public boolean updateVehicle(int id, String plate, String brand, String model,
-            int year, int capacity, LineColor line, Driver driver) throws SQLException {
-        requireAdmin();
-        Vehicle current = vehicleDao.findById(id);
-        if (current == null) {
-            throw new IllegalArgumentException("El vehículo que se quiere editar no existe.");
+    public void updateVehicle(SessionUser actor, int vehicleId, String plate, String brand, String model,
+            int year, int capacity, LineColor line, Driver driver) {
+        Vehicle current = getVehicle(actor, vehicleId);
+        Vehicle vehicle = buildVehicle(vehicleId, plate, brand, model, year, capacity, line, driver);
+        try {
+            requireDriverExists(driver);
+            boolean plateChanged = !current.getPlate().equals(vehicle.getPlate());
+            if (plateChanged && vehicleDao.existsByPlate(vehicle.getPlate())) {
+                throw new ValidationException("Ya existe un vehículo con esa placa.");
+            }
+            if (!vehicleDao.updateVehicle(vehicle)) {
+                throw new NotFoundException("El vehículo ya no existe. Actualiza la lista.");
+            }
+        } catch (SQLException e) {
+            throw translate(e, "No se pudo actualizar el vehículo.");
         }
-        Vehicle vehicle = buildVehicle(id, plate, brand, model, year, capacity, line, driver);
-        boolean plateChanged = !current.getPlate().equals(vehicle.getPlate());
-        if (plateChanged && vehicleDao.existsByPlate(vehicle.getPlate())) {
-            throw new IllegalArgumentException("Ya existe un vehículo con esa placa.");
-        }
-        return vehicleDao.updateVehicle(vehicle);
     }
-
     /**
      * Borra un vehículo.
      *
-     * @param id id del vehículo
-     * @return true si se borró
-     * @throws SecurityException si quien tiene la sesión no es administrador
-     * @throws SQLException      si falla la base de datos
+     * @param actor     usuario de la sesión
+     * @param vehicleId id del vehículo
+     * @throws NotFoundException si el vehículo ya no existe
      */
-    public boolean deleteVehicle(int id) throws SQLException {
-        requireAdmin();
-        return vehicleDao.deleteVehicle(id);
+    public void deleteVehicle(SessionUser actor, int vehicleId) {
+        AccessControl.requireFleetManager(actor);
+        try {
+            if (!vehicleDao.deleteVehicle(vehicleId)) {
+                throw new NotFoundException("El vehículo ya no existe. Actualiza la lista.");
+            }
+        } catch (SQLException e) {
+            throw failure("No se pudo borrar el vehículo.", e);
+        }
     }
-
     /**
-     * Valida los datos y arma el vehículo. El año, la capacidad, la línea y
-     * el conductor los comprueba el constructor de Vehicle.
-     *
-     * @return vehículo con la placa en mayúsculas y los textos limpios
-     * @throws IllegalArgumentException si algún dato no es válido o el conductor no existe
-     * @throws SQLException             si falla la consulta del conductor
+     * Valida los datos y arma el vehículo. El año, la capacidad, la línea y el
+     * conductor los valida además el constructor de Vehicle.
      */
     private Vehicle buildVehicle(int id, String plate, String brand, String model, int year,
-            int capacity, LineColor line, Driver driver) throws SQLException {
-        String cleanPlate = requireText(plate, "La placa es obligatoria.").toUpperCase(Locale.ROOT);
-        if (cleanPlate.length() > MAX_PLATE_LENGTH) {
-            throw new IllegalArgumentException(
-                    "La placa no puede tener más de " + MAX_PLATE_LENGTH + " caracteres.");
+            int capacity, LineColor line, Driver driver) {
+        String cleanPlate = InputValidator.requireText(plate, "La placa es obligatoria.")
+                .toUpperCase(Locale.ROOT);
+        InputValidator.requireMaxLength(cleanPlate, MAX_PLATE_LENGTH,
+                "La placa no puede tener más de " + MAX_PLATE_LENGTH + " caracteres.");
+        String cleanBrand = InputValidator.requireMaxLength(InputValidator.optionalText(brand),
+                MAX_BRAND_MODEL_LENGTH, "La marca no puede tener más de " + MAX_BRAND_MODEL_LENGTH + " 
+caracteres.");
+        String cleanModel = InputValidator.requireMaxLength(InputValidator.optionalText(model),
+                MAX_BRAND_MODEL_LENGTH, "El modelo no puede tener más de " + MAX_BRAND_MODEL_LENGTH + " 
+caracteres.");
+        try {
+            return new Vehicle(id, cleanPlate, cleanBrand, cleanModel, year, capacity, line, driver);
+        } catch (IllegalArgumentException e) {
+            // Vehicle valida año, capacidad, línea y conductor con mensajes en español.
+            throw new ValidationException(e.getMessage(), e);
         }
-        Vehicle vehicle = new Vehicle(id, cleanPlate, blankToNull(brand), blankToNull(model),
-                year, capacity, line, driver);
+    }
+    /** Comprueba que el conductor elegido todavía exista. */
+    private void requireDriverExists(Driver driver) throws SQLException {
         if (!vehicleDao.driverExists(driver.getId())) {
-            throw new IllegalArgumentException("El conductor seleccionado no existe.");
-        }
-        return vehicle;
-    }
-
-    /**
-     * Comprueba que quien tiene la sesión puede gestionar la flota.
-     *
-     * @throws SecurityException si no hay sesión o el rol no tiene permiso
-     */
-    private void requireAdmin() {
-        if (!UserSession.isLoggedIn() || !UserSession.getRole().canManageFleet()) {
-            throw new SecurityException("Solo el administrador puede gestionar vehículos.");
+            throw new ValidationException("El conductor seleccionado no existe.");
         }
     }
-
-    /**
-     * Exige un texto no vacío y lo devuelve sin espacios a los lados.
-     *
-     * @param value   texto recibido
-     * @param message mensaje si está vacío
-     * @return texto limpio
-     * @throws IllegalArgumentException si es null o está vacío
-     */
-    private String requireText(String value, String message) {
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(message);
+    /** Convierte los errores de restricciones en mensajes claros. */
+    private RuntimeException translate(SQLException e, String message) {
+        if (UNIQUE_VIOLATION.equals(e.getSQLState())) {
+            return new ValidationException("Ya existe un vehículo con esa placa.", e);
         }
-        return value.trim();
+        if (FOREIGN_KEY_VIOLATION.equals(e.getSQLState())) {
+            return new ValidationException("El conductor seleccionado no existe.", e);
+        }
+        if (CHECK_VIOLATION.equals(e.getSQLState())) {
+            // Por ejemplo, el trigger de la línea del vehículo si no es la de la ruta del conductor.
+            return new ValidationException(
+                    "Los datos del vehículo no cumplen una regla de la base de datos. "
+                            + "Revisa que la línea coincida con la ruta del conductor.", e);
+        }
+        return failure(message, e);
     }
-
-    /**
-     * Limpia un texto opcional.
-     *
-     * @param value texto recibido
-     * @return texto sin espacios, o null si venía vacío
-     */
-    private String blankToNull(String value) {
-        return value == null || value.isBlank() ? null : value.trim();
+    /** Registra el error técnico y devuelve uno con mensaje para el usuario. */
+    private DataAccessException failure(String message, SQLException e) {
+        LOGGER.log(Level.SEVERE, "Fallo de base de datos en VehicleService", e);
+        return new DataAccessException(message + " Revisa la conexión con la base de datos.", e);
     }
 }
