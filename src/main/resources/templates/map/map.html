@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Mapa')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+<main class="container">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <div class="page-header">
+        <div>
+            <h1>Conoce nuestras rutas</h1>
+            <p class="muted">Contamos con muchas estaciones, te llevamos a donde quieras.</p>
+        </div>
+    </div>
+    <!-- Leaflet se descarga de unpkg; los hashes de integridad son los oficiales de Leaflet 1.9.4. -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+    <div class="map-wrapper card">
+        <div id="map" class="map" role="region" aria-label="Mapa de estaciones y rutas"></div>
+        <div id="mapNotice" class="alert alert-error map-notice" role="alert" hidden></div>
+    </div>
+    <ul id="lineLegend" class="legend" aria-label="Líneas del metro"></ul>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="/js/map.js"></script>
+</body>
+</html>
