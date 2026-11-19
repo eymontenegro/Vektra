@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Crear cuenta')}"></head>
+<body class="auth-page">
+<main class="container container-narrow">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <form method="post" action="/register" class="card form" data-validate>
+        <h1>Crear cuenta</h1>
+        <p class="muted">Regístrate para comprar tickets</p>
+        <div class="alert alert-error" role="alert" th:if="${error}" th:text="${error}">Error</div>
+        <input type="hidden" name="_csrf" th:value="${csrfToken}">
+        <label for="nationalId">Cédula</label>
+        <input id="nationalId" name="nationalId" required inputmode="numeric" pattern="\d{6,12}" maxlength="12"
+               placeholder="Ej. 1020304050" th:value="${form.nationalId}"
+               data-message-required="La cédula es obligatoria."
+               data-message-pattern="La cédula debe tener entre 6 y 12 dígitos, sin puntos ni espacios.">
+        <div class="form-row">
+            <div>
+                <label for="name">Nombre</label>
+                <input id="name" name="name" required maxlength="100" autocomplete="given-name"
+                       placeholder="Ej. María" th:value="${form.name}"
+                       data-message-required="El nombre es obligatorio.">
+            </div>
+            <div>
+                <label for="lastName">Apellido</label>
+                <input id="lastName" name="lastName" required maxlength="100" autocomplete="family-name"
+                       placeholder="Ej. Pérez" th:value="${form.lastName}"
+                       data-message-required="El apellido es obligatorio.">
+            </div>
+        </div>
+        <label for="email">Correo electrónico</label>
+        <input id="email" name="email" type="email" required maxlength="150" autocomplete="email"
+               placeholder="correo@ejemplo.com" th:value="${form.email}"
+               data-message-required="El correo es obligatorio."
+               data-message-type="El correo no tiene un formato válido.">
+        <label for="password">Contraseña</label>
+        <input id="password" name="password" type="password" required maxlength="72" autocomplete="new-password"
+               th:attr="minlength=${minPasswordLength},data-message-short=${'La contraseña debe tener al menos ' + 
+minPasswordLength + ' caracteres.'}"
+               data-message-required="La contraseña es obligatoria.">
+        <p class="hint" th:text="'Mínimo ' + ${minPasswordLength} + ' caracteres.'">Mínimo 8 caracteres.</p>
+        <label for="birthDate">Fecha de nacimiento</label>
+        <input id="birthDate" name="birthDate" type="date" required min="1900-01-01"
+               th:attr="max=${today}" th:value="${form.birthDate}"
+               data-message-required="La fecha de nacimiento es obligatoria."
+               data-message-range="La fecha de nacimiento no es válida.">
+        <button type="submit" class="btn btn-primary btn-block">Crear cuenta</button>
+        <p class="center"><a href="/login">Ya tengo cuenta, volver a iniciar sesión</a></p>
+    </form>
+</main>
+</body>
+</html>

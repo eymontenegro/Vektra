@@ -5,14 +5,16 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.vektra</groupId>
     <artifactId>Vektra</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>2.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>25</maven.compiler.release>
+        <maven.compiler.release>21</maven.compiler.release>
         <exec.mainClass>com.vektra.Main</exec.mainClass>
         <postgresql.version>42.7.11</postgresql.version>
-        <javafx.version>25.0.1</javafx.version>
+        <javalin.version>6.7.0</javalin.version>
+        <thymeleaf.version>3.1.5.RELEASE</thymeleaf.version>
+        <slf4j.version>2.0.16</slf4j.version>
         <junit.version>5.11.4</junit.version>
         <!-- Las pruebas que necesitan PostgreSQL se excluyen por defecto. -->
         <test.excludedGroups>database</test.excludedGroups>
@@ -24,21 +26,23 @@
             <artifactId>postgresql</artifactId>
             <version>${postgresql.version}</version>
         </dependency>
-        <!-- JavaFX (solo lo usa MapView; se quita en el PR 2) -->
+        <!-- Servidor web (Jetty embebido) -->
         <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-controls</artifactId>
-            <version>${javafx.version}</version>
+            <groupId>io.javalin</groupId>
+            <artifactId>javalin</artifactId>
+            <version>${javalin.version}</version>
         </dependency>
+        <!-- Plantillas HTML -->
         <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-swing</artifactId>
-            <version>${javafx.version}</version>
+            <groupId>org.thymeleaf</groupId>
+            <artifactId>thymeleaf</artifactId>
+            <version>${thymeleaf.version}</version>
         </dependency>
+        <!-- Registro de Javalin y Jetty en consola -->
         <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-web</artifactId>
-            <version>${javafx.version}</version>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>${slf4j.version}</version>
         </dependency>
         <!-- Email -->
         <dependency>
@@ -52,7 +56,7 @@
             <artifactId>jbcrypt</artifactId>
             <version>0.4</version>
         </dependency>
-        <!-- Gson -->
+        <!-- Gson (JSON del mapa y de la búsqueda de rutas) -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
