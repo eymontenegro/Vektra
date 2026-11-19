@@ -1,0 +1,58 @@
+
+<!DOCTYPE html>
+<!--
+  Piezas comunes de todas las páginas de Vektra. Cada página las incluye con
+  th:replace, así el menú y los mensajes se escriben una sola vez.
+    head(title)  etiqueta <head> con el título, la hoja de estilos y forms.js
+    navbar       menú superior según el rol de la persona conectada
+    flash        mensajes de éxito o error pendientes
+    footer       pie de página-->
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' | Vektra'">Vektra</title>
+    <link rel="icon" type="image/png" href="/images/vektra-logo.png">
+    <link rel="stylesheet" href="/css/vektra.css">
+    <script src="/js/forms.js" defer></script>
+</head>
+<body>
+<header th:fragment="navbar" class="navbar">
+    <a class="navbar-brand" href="/map">
+        <img src="/images/vektra-logo.png" alt="" width="36" height="36">
+        <span>Vektra</span>
+    </a>
+    <nav class="navbar-links" aria-label="Menú principal" th:if="${currentUser != null}">
+        <a href="/map" th:classappend="${#strings.startsWith(currentPath, '/map')} ? 'active'">Mapa</a>
+        <th:block th:if="${currentUser.canBuyTickets()}">
+            <a href="/tickets/buy" th:classappend="${currentPath == '/tickets/buy'} ? 'active'">Comprar ticket</a>
+            <a href="/tickets" th:classappend="${currentPath == '/tickets'} ? 'active'">Mis tickets</a>
+        </th:block>
+        <th:block th:if="${currentUser.canManageFleet()}">
+            <a href="/admin/drivers" th:classappend="${#strings.startsWith(currentPath, '/admin/drivers')} ? 
+'active'">Conductores</a>
+            <a href="/admin/vehicles" th:classappend="${#strings.startsWith(currentPath, '/admin/vehicles')} ? 
+'active'">Vehículos</a>
+        </th:block>
+        <a th:if="${currentUser.canViewDashboard()}" href="/admin/dashboard"
+           th:classappend="${currentPath == '/admin/dashboard'} ? 'active'">Dashboard</a>
+    </nav>
+    <div class="navbar-user" th:if="${currentUser != null}">
+        <span th:text="'Hola, ' + ${currentUser.name()}">Hola</span>
+        <form method="post" action="/logout">
+            <input type="hidden" name="_csrf" th:value="${csrfToken}">
+            <button type="submit" class="btn btn-ghost">Cerrar sesión</button>
+        </form>
+    </div>
+</header>
+<div th:fragment="flash" class="flash-area" aria-live="polite">
+    <div th:each="message : ${flashMessages}"
+         th:class="'alert alert-' + ${message.type()}"
+         th:attr="role=${message.type() == 'error' ? 'alert' : 'status'}"
+         th:text="${message.text()}">Mensaje</div>
+</div>
+<footer th:fragment="footer" class="footer">
+    <p>Vektra · Sistema de Metro Inteligente · Valledupar</p>
+</footer>
+</body>
+</html>
