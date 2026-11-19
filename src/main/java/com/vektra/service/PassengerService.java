@@ -136,12 +136,10 @@ public class PassengerService {
                 "El correo no puede tener más de " + MAX_EMAIL_LENGTH + " caracteres.");
         InputValidator.requirePattern(email, InputValidator.EMAIL, "El correo no tiene un formato válido.");
         if (password.length() < MIN_PASSWORD_LENGTH) {
-            throw new ValidationException("La contraseña debe tener al menos " + MIN_PASSWORD_LENGTH + " 
-caracteres.");
+            throw new ValidationException("La contraseña debe tener al menos " + MIN_PASSWORD_LENGTH + " caracteres.");
         }
         if (password.length() > MAX_PASSWORD_LENGTH) {
-            throw new ValidationException("La contraseña no puede tener más de " + MAX_PASSWORD_LENGTH + " 
-caracteres.");
+            throw new ValidationException("La contraseña no puede tener más de " + MAX_PASSWORD_LENGTH + " caracteres.");
         }
         if (birthDate.isAfter(LocalDate.now()) || birthDate.getYear() < 1900) {
             throw new ValidationException("La fecha de nacimiento no es válida.");
