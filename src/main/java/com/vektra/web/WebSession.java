@@ -3,7 +3,6 @@ package com.vektra.web;
 import com.vektra.security.SessionUser;
 import io.javalin.http.Context;
 import jakarta.servlet.http.HttpSession;
-import org.mpierce.ktor.csrf.CsrfProtection;
 
 /**
 * Guarda y lee la persona conectada en la sesión HTTP del navegador.
