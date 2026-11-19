@@ -1,16 +1,19 @@
 package com.vektra;
 import com.vektra.config.AppConfig;
+import com.vektra.dao.DashboardDao;
 import com.vektra.dao.PassengerDao;
 import com.vektra.dao.RouteDao;
 import com.vektra.dao.StationDao;
 import com.vektra.dao.UserDao;
 import com.vektra.security.LoginAttemptLimiter;
+import com.vektra.service.DashboardService;
 import com.vektra.service.PassengerService;
 import com.vektra.service.RouteService;
 import com.vektra.service.UserService;
 import com.vektra.web.TemplateRenderer;
 import com.vektra.web.WebServer;
 import com.vektra.web.controller.AuthController;
+import com.vektra.web.controller.DashboardController;
 /**
 * Punto de entrada de Vektra.
 *
@@ -27,17 +30,17 @@ private Main() {
 }
 /**
 * Arranca la aplicación.
-*
-* @param args argumentos de la línea de comandos (no se usan)
-*/
-public static void main(String[] args) {
-AppConfig config = AppConfig.global();
-// Servicios que usan varias partes de la aplicación.
-RouteService routeService = new RouteService(new RouteDao(), new StationDao());
-PassengerDao passengerDao = new PassengerDao();
-// Las plantillas se guardan en caché salvo que server.dev=true.
-boolean devMode = config.get("server.dev").map(Boolean::parseBoolean).orElse(false);
-TemplateRenderer renderer = new TemplateRenderer(!devMode);
+     *
+     * @param args argumentos de la línea de comandos (no se usan)
+     */
+    public static void main(String[] args) {
+        AppConfig config = AppConfig.global();
+        // Servicios que usan varias partes de la aplicación.
+        RouteService routeService = new RouteService(new RouteDao(), new StationDao());
+        PassengerDao passengerDao = new PassengerDao();
+        // Las plantillas se guardan en caché salvo que server.dev=true.
+        boolean devMode = config.get("server.dev").map(Boolean::parseBoolean).orElse(false);
+        TemplateRenderer renderer = new TemplateRenderer(!devMode);
         WebServer server = new WebServer(renderer);
         // --- Líder: autenticación --
         UserService userService = new UserService(new UserDao());
@@ -45,7 +48,8 @@ TemplateRenderer renderer = new TemplateRenderer(!devMode);
         LoginAttemptLimiter loginLimiter = new LoginAttemptLimiter();
         server.register(new AuthController(userService, passengerService, loginLimiter, renderer));
         // --- Desarrollador 1: dashboard --
-        // (El desarrollador reemplaza este comentario con su código en su PR.)
+        DashboardService dashboardService = new DashboardService(new DashboardDao());
+        server.register(new DashboardController(dashboardService, renderer));
         // --- Desarrollador 2: mapa y tickets --
         // (El desarrollador reemplaza este comentario con su código en su PR.)
         // --- Desarrollador 3: conductores y vehículos --
