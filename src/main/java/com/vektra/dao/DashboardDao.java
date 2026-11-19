@@ -1,76 +1,83 @@
 package com.vektra.dao;
-
 import com.vektra.connection.DatabaseConnection;
+import com.vektra.model.DashboardTotals;
+import com.vektra.model.StationSales;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
+import java.util.ArrayList;
+import java.util.List;
+Ctrl+A
+ 
+→
+ pega
 /**
- * Consulta los totales que muestra el dashboard: conductores, vehículos,
- * estaciones y rutas.
+ * Consulta los datos del dashboard en las vistas v_dashboard_totals y
+ * v_ticket_sales_by_origin (creadas por vektra.sql versión 2 o por la
+ * migración V2).
  *
- * Si la consulta falla lanza una SQLException, de modo que un error de la
- * base de datos nunca se confunde con un total real de cero.
+ * Antes se hacían cuatro consultas COUNT, una conexión por cada una; ahora
+ * todos los totales llegan en una sola fila. Si la consulta falla lanza una
+ * SQLException, de modo que un error nunca se confunde con un total de cero.
  */
 public class DashboardDao {
-
+    private static final String SELECT_TOTALS = """
+            SELECT total_drivers, active_drivers, total_vehicles, total_stations,
+                   total_routes, total_passengers, total_tickets, total_revenue
+            FROM v_dashboard_totals
+            """;
+    private static final String SELECT_TOP_ORIGINS = """
+            SELECT station_name, tickets_sold, revenue
+            FROM v_ticket_sales_by_origin
+            ORDER BY tickets_sold DESC, station_name
+            LIMIT ?
+            """;
     /**
-     * Cuenta los conductores registrados.
+     * Lee todos los totales del sistema.
      *
-     * @return total de conductores
-     * @throws SQLException si falla la consulta
+     * @return totales actuales
+     * @throws SQLException si falla la consulta o la vista no existe
      */
-    public int countDrivers() throws SQLException {
-        return count("SELECT COUNT(*) FROM drivers");
-    }
-
-    /**
-     * Cuenta los vehículos registrados.
-     *
-     * @return total de vehículos
-     * @throws SQLException si falla la consulta
-     */
-    public int countVehicles() throws SQLException {
-        return count("SELECT COUNT(*) FROM vehicles");
-    }
-
-    /**
-     * Cuenta las estaciones registradas.
-     *
-     * @return total de estaciones
-     * @throws SQLException si falla la consulta
-     */
-    public int countStations() throws SQLException {
-        return count("SELECT COUNT(*) FROM stations");
-    }
-
-    /**
-     * Cuenta las rutas registradas.
-     *
-     * @return total de rutas
-     * @throws SQLException si falla la consulta
-     */
-    public int countRoutes() throws SQLException {
-        return count("SELECT COUNT(*) FROM routes");
-    }
-
-    /**
-     * Ejecuta una consulta COUNT y devuelve su resultado. Es el único lugar
-     * donde se abre la conexión para el dashboard.
-     *
-     * @param sql consulta que devuelve una sola columna con el total
-     * @return total obtenido
-     * @throws SQLException si falla la consulta o no devuelve resultado
-     */
-    private int count(String sql) throws SQLException {
+    public DashboardTotals findTotals() throws SQLException {
         try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql);
+             PreparedStatement statement = connection.prepareStatement(SELECT_TOTALS);
              ResultSet resultSet = statement.executeQuery()) {
             if (!resultSet.next()) {
                 throw new SQLException("La consulta de totales no devolvió resultado.");
             }
-            return resultSet.getInt(1);
+            return new DashboardTotals(
+                    resultSet.getInt("total_drivers"),
+                    resultSet.getInt("active_drivers"),
+                    resultSet.getInt("total_vehicles"),
+                    resultSet.getInt("total_stations"),
+                    resultSet.getInt("total_routes"),
+                    resultSet.getInt("total_passengers"),
+                    resultSet.getInt("total_tickets"),
+                    resultSet.getBigDecimal("total_revenue"));
         }
+    }
+    /**
+     * Estaciones de origen con más tickets vendidos.
+     *
+     * @param limit cuántas estaciones devolver, mayor que cero
+     * @return estaciones ordenadas de más a menos ventas
+     * @throws SQLException si falla la consulta o la vista no existe
+     */
+    public List<StationSales> findTopOrigins(int limit) throws SQLException {
+        List<StationSales> sales = new ArrayList<>();
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(SELECT_TOP_ORIGINS)) {
+            statement.setInt(1, limit);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    sales.add(new StationSales(
+                            resultSet.getString("station_name"),
+                            resultSet.getInt("tickets_sold"),
+                            resultSet.getBigDecimal("revenue")));
+                }
+            }
+        }
+        return sales;
     }
 }
