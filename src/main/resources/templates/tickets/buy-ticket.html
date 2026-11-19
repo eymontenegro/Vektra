@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Comprar ticket')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+<main class="container container-narrow">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <form method="post" action="/tickets/buy" class="card form" data-validate id="buyTicketForm">
+        <h1>Comprar un ticket</h1>
+        <p class="muted">Elige tu origen y tu destino. El ticket llegará a tu correo.</p>
+        <p th:text="'Comprando como ' + ${currentUser.name()} + ' (' + ${currentUser.email()} + ')'">Comprando 
+como…</p>
+        <div class="alert alert-error" role="alert" th:if="${error}" th:text="${error}">Error</div>
+        <input type="hidden" name="_csrf" th:value="${csrfToken}">
+        <label for="originId">Estación de origen</label>
+        <select id="originId" name="originId" required data-message-required="Selecciona la estación de origen.">
+            <option value="">Elige una estación</option>
+            <option th:each="station : ${stations}" th:value="${station.id}" th:text="${station.name}"
+                    th:selected="${#strings.toString(station.id) == originId}">Estación</option>
+        </select>
+        <label for="destinationId">Estación de destino</label>
+        <select id="destinationId" name="destinationId" required data-message-required="Selecciona la estación de 
+destino.">
+            <option value="">Elige una estación</option>
+            <option th:each="station : ${stations}" th:value="${station.id}" th:text="${station.name}"
+                    th:selected="${#strings.toString(station.id) == destinationId}">Estación</option>
+        </select>
+        <p id="routeInfo" class="route-info" aria-live="polite">Elige la estación de origen y la de destino.</p>
+        <p><strong>Precio:</strong> <span th:text="${fare}">$2.500</span></p>
+        <button type="submit" class="btn btn-primary btn-block" data-busy-text="Comprando…">Comprar 
+ticket</button>
+    </form>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script src="/js/buy-ticket.js"></script>
+</body>
+</html>

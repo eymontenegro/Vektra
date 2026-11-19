@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Mis tickets')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+<main class="container">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <div class="page-header">
+        <div>
+            <h1>Mis tickets</h1>
+            <p class="muted">Tus tickets comprados, del más reciente al más antiguo.</p>
+        </div>
+        <a href="/tickets/buy" class="btn btn-primary">Comprar ticket</a>
+    </div>
+    <section class="card">
+        <p class="empty-state" th:if="${#lists.isEmpty(tickets)}">
+            Todavía no tienes tickets. Cuando compres uno, aparecerá aquí.
+        </p>
+        <div class="table-wrap" th:unless="${#lists.isEmpty(tickets)}">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th scope="col">Código</th><th scope="col">Origen</th><th scope="col">Destino</th>
+                    <th scope="col">Línea</th><th scope="col">Fecha</th><th scope="col">Precio</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="ticket : ${tickets}">
+                    <td class="mono" th:text="${ticket.code()}">VK-0000000000</td>
+                    <td th:text="${ticket.origin()}">Origen</td>
+                    <td th:text="${ticket.destination()}">Destino</td>
+                    <td>
+                        <span class="line-dot" th:if="${ticket.lineColor() != null}"
+                              th:style="'background:' + ${ticket.lineColor()}" aria-hidden="true"></span>
+                        <span th:text="${ticket.lineName()}">Línea</span>
+                    </td>
+                    <td th:text="${ticket.date()}">01/01/2026 08:00</td>
+                    <td th:text="${ticket.price()}">$2.500</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>
