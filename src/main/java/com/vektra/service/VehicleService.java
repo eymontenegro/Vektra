@@ -164,11 +164,9 @@ public class VehicleService {
         InputValidator.requireMaxLength(cleanPlate, MAX_PLATE_LENGTH,
                 "La placa no puede tener más de " + MAX_PLATE_LENGTH + " caracteres.");
         String cleanBrand = InputValidator.requireMaxLength(InputValidator.optionalText(brand),
-                MAX_BRAND_MODEL_LENGTH, "La marca no puede tener más de " + MAX_BRAND_MODEL_LENGTH + " 
-caracteres.");
+                MAX_BRAND_MODEL_LENGTH, "La marca no puede tener más de " + MAX_BRAND_MODEL_LENGTH + " caracteres.");
         String cleanModel = InputValidator.requireMaxLength(InputValidator.optionalText(model),
-                MAX_BRAND_MODEL_LENGTH, "El modelo no puede tener más de " + MAX_BRAND_MODEL_LENGTH + " 
-caracteres.");
+                MAX_BRAND_MODEL_LENGTH, "El modelo no puede tener más de " + MAX_BRAND_MODEL_LENGTH + " caracteres.");
         try {
             return new Vehicle(id, cleanPlate, cleanBrand, cleanModel, year, capacity, line, driver);
         } catch (IllegalArgumentException e) {
