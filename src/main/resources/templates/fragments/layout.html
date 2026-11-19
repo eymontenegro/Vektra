@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <!--
   Piezas comunes de todas las páginas de Vektra. Cada página las incluye con
@@ -29,10 +28,8 @@
             <a href="/tickets" th:classappend="${currentPath == '/tickets'} ? 'active'">Mis tickets</a>
         </th:block>
         <th:block th:if="${currentUser.canManageFleet()}">
-            <a href="/admin/drivers" th:classappend="${#strings.startsWith(currentPath, '/admin/drivers')} ? 
-'active'">Conductores</a>
-            <a href="/admin/vehicles" th:classappend="${#strings.startsWith(currentPath, '/admin/vehicles')} ? 
-'active'">Vehículos</a>
+            <a href="/admin/drivers" th:classappend="${#strings.startsWith(currentPath, '/admin/drivers')} ? 'active'">Conductores</a>
+            <a href="/admin/vehicles" th:classappend="${#strings.startsWith(currentPath, '/admin/vehicles')} ? 'active'">Vehículos</a>
         </th:block>
         <a th:if="${currentUser.canViewDashboard()}" href="/admin/dashboard"
            th:classappend="${currentPath == '/admin/dashboard'} ? 'active'">Dashboard</a>
