@@ -8,10 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-Ctrl+A
- 
-→
- pega
+
 /**
  * Consulta los datos del dashboard en las vistas v_dashboard_totals y
  * v_ticket_sales_by_origin (creadas por vektra.sql versión 2 o por la
