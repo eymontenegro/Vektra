@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Vehículos')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+<main class="container">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <div class="page-header">
+        <div>
+            <h1>Vehículos</h1>
+            <p class="muted">Vehículos registrados, ordenados por placa.</p>
+        </div>
+        <a href="/admin/vehicles/new" class="btn btn-primary">Añadir vehículo</a>
+    </div>
+    <section class="card">
+        <p class="empty-state" th:if="${#lists.isEmpty(vehicles)}">Todavía no hay vehículos registrados.</p>
+        <div class="table-wrap" th:unless="${#lists.isEmpty(vehicles)}">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th scope="col">Placa</th><th scope="col">Marca</th><th scope="col">Modelo</th>
+                    <th scope="col">Año</th><th scope="col">Capacidad</th><th scope="col">Línea</th>
+                    <th scope="col">Conductor</th><th scope="col">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="vehicle : ${vehicles}">
+                    <td class="mono" th:text="${vehicle.plate}">VKT-001</td>
+                    <td th:text="${vehicle.brand} ?: '—'">Siemens</td>
+                    <td th:text="${vehicle.model} ?: '—'">Inspiro</td>
+                    <td th:text="${vehicle.year}">2020</td>
+                    <td th:text="${vehicle.capacity}">300</td>
+                    <td>
+                        <span class="line-dot" th:style="'background:' + ${vehicle.line.hexCode}" aria
+hidden="true"></span>
+                        <span th:text="${vehicle.lineName}">Roja</span>
+                    </td>
+                    <td th:text="${vehicle.driverName}">Carlos Pérez</td>
+                    <td class="actions">
+                        <a class="btn btn-outline btn-small" th:href="'/admin/vehicles/' + ${vehicle.id} + 
+'/edit'">Editar</a>
+                        <form method="post" th:action="'/admin/vehicles/' + ${vehicle.id} + '/delete'"
+                              th:attr="data-confirm=${'¿Seguro que quieres borrar el vehículo ' + vehicle.plate + 
+'?'}">
+                            <input type="hidden" name="_csrf" th:value="${csrfToken}">
+                            <button type="submit" class="btn btn-danger btn-small">Borrar</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>
