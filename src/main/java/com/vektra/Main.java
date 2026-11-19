@@ -1,30 +1,24 @@
 package com.vektra;
 import com.vektra.config.AppConfig;
 import com.vektra.dao.DashboardDao;
-import com.vektra.dao.DriverDao;
 import com.vektra.dao.PassengerDao;
 import com.vektra.dao.RouteDao;
 import com.vektra.dao.StationDao;
 import com.vektra.dao.TicketDao;
 import com.vektra.dao.UserDao;
-import com.vektra.dao.VehicleDao;
 import com.vektra.security.LoginAttemptLimiter;
 import com.vektra.service.DashboardService;
-import com.vektra.service.DriverService;
 import com.vektra.service.EmailService;
 import com.vektra.service.PassengerService;
 import com.vektra.service.RouteService;
 import com.vektra.service.TicketService;
 import com.vektra.service.UserService;
-import com.vektra.service.VehicleService;
 import com.vektra.web.TemplateRenderer;
 import com.vektra.web.WebServer;
 import com.vektra.web.controller.AuthController;
 import com.vektra.web.controller.DashboardController;
-import com.vektra.web.controller.DriverController;
 import com.vektra.web.controller.MapController;
 import com.vektra.web.controller.TicketController;
-import com.vektra.web.controller.VehicleController;
 /**
  * Punto de entrada de Vektra.
  *
@@ -62,15 +56,12 @@ public final class Main {
         DashboardService dashboardService = new DashboardService(new DashboardDao());
         server.register(new DashboardController(dashboardService, renderer));
         // --- Desarrollador 2: mapa y tickets --
-        TicketService ticketService = new TicketService(new TicketDao(), passengerDao,
-                routeService, EmailService.fromConfig());
-        server.register(new MapController(routeService, renderer));
-        server.register(new TicketController(ticketService, routeService, renderer));
-        // --- Desarrollador 3: conductores y vehículos --
-        DriverService driverService = new DriverService(new DriverDao(), routeService);
-        VehicleService vehicleService = new VehicleService(new VehicleDao());
-        server.register(new DriverController(driverService, routeService, renderer));
-server.register(new VehicleController(vehicleService, driverService, renderer));
+TicketService ticketService = new TicketService(new TicketDao(), passengerDao,
+routeService, EmailService.fromConfig());
+server.register(new MapController(routeService, renderer));
+server.register(new TicketController(ticketService, routeService, renderer));
+// --- Desarrollador 3: conductores y vehículos --
+// (El desarrollador reemplaza este comentario con su código en su PR.)
 server.start(config.getInt("server.port", DEFAULT_PORT));
 }
 }
