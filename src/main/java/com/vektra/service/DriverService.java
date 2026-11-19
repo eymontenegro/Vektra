@@ -1,33 +1,38 @@
 package com.vektra.service;
-
 import com.vektra.dao.DriverDao;
+import com.vektra.exception.DataAccessException;
+import com.vektra.exception.NotFoundException;
+import com.vektra.exception.ValidationException;
 import com.vektra.model.Driver;
-import com.vektra.util.UserSession;
+import com.vektra.model.DriverStatus;
+import com.vektra.security.AccessControl;
+import com.vektra.security.SessionUser;
+import com.vektra.util.InputValidator;
 import java.sql.SQLException;
 import java.util.List;
-
+import java.util.logging.Level;
+import java.util.logging.Logger;
 /**
- * Reglas de negocio de los conductores. Los paneles solo hablan con esta clase.
+ * Reglas de negocio de los conductores. Los controladores solo hablan con esta clase.
  *
- * Todas las operaciones son del administrador: el Service vuelve a comprobar
- * el rol de la sesión, porque ocultar un botón no es seguridad. Lanza
- * IllegalArgumentException si los datos no son válidos y SecurityException si
- * el rol no tiene permiso.
+ * Todas las operaciones son del administrador: cada método recibe quién
+ * lo pide y vuelve a comprobar el permiso, porque ocultar un botón no es
+ * seguridad. Lanza ValidationException si los datos no son válidos,
+ * AuthorizationException si no hay permiso y DataAccessException si falla
+ * la base de datos.
  */
 public class DriverService {
-
-    /** Estado con el que se crea un conductor nuevo. */
-    public static final String STATUS_ACTIVE = "ACTIVE";
-
-    /** Largo máximo de la cédula, igual que la columna national_id. */
-    private static final int MAX_NATIONAL_ID_LENGTH = 12;
-
+    /** Largo máximo de la licencia, igual que la columna license_number. */
+    private static final int MAX_LICENSE_LENGTH = 50;
+    /** Largo máximo de nombres y apellidos, igual que las columnas de drivers. */
+    private static final int MAX_NAME_LENGTH = 100;
+    private static final String UNIQUE_VIOLATION = "23505";
+    private static final String FOREIGN_KEY_VIOLATION = "23503";
+    private static final Logger LOGGER = Logger.getLogger(DriverService.class.getName());
     /** Acceso a los conductores en la base de datos. */
     private final DriverDao driverDao;
-
     /** Se usa para comprobar que la ruta asignada existe. */
     private final RouteService routeService;
-
     /**
      * Crea el servicio con sus dependencias.
      *
@@ -38,122 +43,141 @@ public class DriverService {
         this.driverDao = driverDao;
         this.routeService = routeService;
     }
-
     /**
      * Lista los conductores registrados.
      *
+     * @param actor usuario de la sesión
      * @return conductores ordenados por apellido y nombre
-     * @throws SecurityException si quien tiene la sesión no es administrador
-     * @throws SQLException      si falla la consulta
      */
-    public List<Driver> getDrivers() throws SQLException {
-        requireAdmin();
-        return driverDao.findAll();
+    public List<Driver> getDrivers(SessionUser actor) {
+        AccessControl.requireFleetManager(actor);
+        try {
+            return driverDao.findAll();
+        } catch (SQLException e) {
+            throw failure("No se pudo cargar la lista de conductores.", e);
+        }
     }
-
+    /**
+     * Busca un conductor por su id.
+     *
+     * @param actor    usuario de la sesión
+     * @param driverId id del conductor
+     * @return el conductor
+     * @throws NotFoundException si no existe
+     */
+    public Driver getDriver(SessionUser actor, int driverId) {
+        AccessControl.requireFleetManager(actor);
+        try {
+            Driver driver = driverDao.findById(driverId);
+            if (driver == null) {
+                throw new NotFoundException("El conductor seleccionado no existe.");
+            }
+            return driver;
+        } catch (SQLException e) {
+            throw failure("No se pudo cargar el conductor.", e);
+        }
+    }
     /**
      * Registra un conductor nuevo con estado activo.
      *
-     * @param nationalId    cédula, obligatoria y única
+     * @param actor         usuario de la sesión
+     * @param nationalId    cédula, obligatoria, 6 a 12 dígitos y única
      * @param name          nombres, obligatorios
      * @param lastName      apellidos, obligatorios
      * @param licenseNumber número de licencia; si viene vacío se guarda sin licencia
-     * @param phone         teléfono; si viene vacío se guarda sin teléfono
+     * @param phone         teléfono de 7 a 15 dígitos; si viene vacío se guarda sin teléfono
      * @param routeId       id de una ruta existente
-     * @return true si se guardó
-     * @throws IllegalArgumentException si algún dato no es válido o está repetido
-     * @throws SecurityException        si quien tiene la sesión no es administrador
-     * @throws SQLException             si falla la base de datos
+     * @return el conductor guardado, con su id
      */
-    public boolean addDriver(String nationalId, String name, String lastName,
-            String licenseNumber, String phone, int routeId) throws SQLException {
-        requireAdmin();
-        String cleanNationalId = requireText(nationalId, "La cédula es obligatoria.");
-        String cleanName = requireText(name, "El nombre es obligatorio.");
-        String cleanLastName = requireText(lastName, "El apellido es obligatorio.");
-        String cleanLicense = blankToNull(licenseNumber);
-        String cleanPhone = blankToNull(phone);
-
-        if (cleanNationalId.length() > MAX_NATIONAL_ID_LENGTH) {
-            throw new IllegalArgumentException(
-                    "La cédula no puede tener más de " + MAX_NATIONAL_ID_LENGTH + " caracteres.");
+    public Driver addDriver(SessionUser actor, String nationalId, String name, String lastName,
+            String licenseNumber, String phone, int routeId) {
+        AccessControl.requireFleetManager(actor);
+        String cleanNationalId = InputValidator.requireText(nationalId, "La cédula es obligatoria.");
+        String cleanName = InputValidator.requireText(name, "El nombre es obligatorio.");
+        String cleanLastName = InputValidator.requireText(lastName, "El apellido es obligatorio.");
+        String cleanLicense = InputValidator.optionalText(licenseNumber);
+        String cleanPhone = InputValidator.optionalText(phone);
+        InputValidator.requirePattern(cleanNationalId, InputValidator.NATIONAL_ID,
+                "La cédula debe tener entre 6 y 12 dígitos, sin puntos ni espacios.");
+        InputValidator.requireMaxLength(cleanName, MAX_NAME_LENGTH,
+                "El nombre no puede tener más de " + MAX_NAME_LENGTH + " caracteres.");
+        InputValidator.requireMaxLength(cleanLastName, MAX_NAME_LENGTH,
+                "El apellido no puede tener más de " + MAX_NAME_LENGTH + " caracteres.");
+        InputValidator.requireMaxLength(cleanLicense, MAX_LICENSE_LENGTH,
+                "La licencia no puede tener más de " + MAX_LICENSE_LENGTH + " caracteres.");
+        InputValidator.requirePattern(cleanPhone, InputValidator.PHONE,
+                "El teléfono debe tener entre 7 y 15 dígitos, sin espacios ni guiones.");
+        if (!routeService.routeExists(routeId)) {
+            throw new ValidationException("La ruta seleccionada no existe.");
         }
-        if (driverDao.existsByNationalId(cleanNationalId)) {
-            throw new IllegalArgumentException("Ya existe un conductor con esa cédula.");
+        try {
+            if (driverDao.existsByNationalId(cleanNationalId)) {
+                throw new ValidationException("Ya existe un conductor con esa cédula.");
+            }
+            if (cleanLicense != null && driverDao.existsByLicenseNumber(cleanLicense)) {
+                throw new ValidationException("Ya existe un conductor con ese número de licencia.");
+            }
+            Driver driver = new Driver(0, cleanNationalId, cleanName, cleanLastName,
+                    cleanLicense, cleanPhone, DriverStatus.ACTIVE, routeId);
+            if (!driverDao.save(driver)) {
+                throw new DataAccessException("No se pudo guardar el conductor. Intenta de nuevo.", null);
+            }
+            return driver;
+        } catch (SQLException e) {
+            if (UNIQUE_VIOLATION.equals(e.getSQLState())) {
+                throw new ValidationException("Ya existe un conductor con esa cédula o licencia.", e);
+            }
+            throw failure("No se pudo guardar el conductor.", e);
         }
-        if (cleanLicense != null && driverDao.existsByLicenseNumber(cleanLicense)) {
-            throw new IllegalArgumentException("Ya existe un conductor con ese número de licencia.");
-        }
-        if (!routeExists(routeId)) {
-            throw new IllegalArgumentException("La ruta seleccionada no existe.");
-        }
-        Driver driver = new Driver(0, cleanNationalId, cleanName, cleanLastName,
-                cleanLicense, cleanPhone, STATUS_ACTIVE, routeId);
-        return driverDao.save(driver);
     }
-
+    /**
+     * Activa un conductor inactivo o desactiva uno activo.
+     *
+     * @param actor    usuario de la sesión
+     * @param driverId id del conductor
+     * @return el estado nuevo
+     * @throws NotFoundException si el conductor no existe
+     */
+    public DriverStatus toggleStatus(SessionUser actor, int driverId) {
+        Driver driver = getDriver(actor, driverId);
+        DriverStatus newStatus = driver.getStatus().toggle();
+        try {
+            if (!driverDao.updateStatus(driverId, newStatus)) {
+                throw new NotFoundException("El conductor seleccionado no existe.");
+            }
+            return newStatus;
+        } catch (SQLException e) {
+            throw failure("No se pudo cambiar el estado del conductor.", e);
+        }
+    }
     /**
      * Borra un conductor. No se puede borrar si tiene vehículos asignados.
      *
-     * @param id id del conductor
-     * @return true si se borró
-     * @throws IllegalArgumentException si el conductor tiene vehículos asignados
-     * @throws SecurityException        si quien tiene la sesión no es administrador
-     * @throws SQLException             si falla la base de datos
+     * @param actor    usuario de la sesión
+     * @param driverId id del conductor
+     * @throws ValidationException si el conductor tiene vehículos asignados
+     * @throws NotFoundException   si el conductor ya no existe
      */
-    public boolean deleteDriver(int id) throws SQLException {
-        requireAdmin();
-        if (driverDao.hasVehicles(id)) {
-            throw new IllegalArgumentException(
-                    "No se puede borrar: el conductor tiene vehículos asignados.");
-        }
-        return driverDao.deleteById(id);
-    }
-
-    /**
-     * Comprueba que quien tiene la sesión puede gestionar la flota.
-     *
-     * @throws SecurityException si no hay sesión o el rol no tiene permiso
-     */
-    private void requireAdmin() {
-        if (!UserSession.isLoggedIn() || !UserSession.getRole().canManageFleet()) {
-            throw new SecurityException("Solo el administrador puede gestionar conductores.");
+    public void deleteDriver(SessionUser actor, int driverId) {
+        AccessControl.requireFleetManager(actor);
+        try {
+            if (driverDao.hasVehicles(driverId)) {
+                throw new ValidationException("No se puede borrar: el conductor tiene vehículos asignados.");
+            }
+            if (!driverDao.deleteById(driverId)) {
+                throw new NotFoundException("El conductor ya no existe. Actualiza la lista.");
+            }
+        } catch (SQLException e) {
+            // Alguien pudo asignarle un vehículo entre la comprobación y el borrado.
+            if (FOREIGN_KEY_VIOLATION.equals(e.getSQLState())) {
+                throw new ValidationException("No se puede borrar: el conductor tiene vehículos asignados.", e);
+            }
+            throw failure("No se pudo borrar el conductor.", e);
         }
     }
-
-    /**
-     * Indica si existe una ruta con ese id.
-     *
-     * @param routeId id de la ruta
-     * @return true si existe
-     * @throws SQLException si falla la consulta de rutas
-     */
-    private boolean routeExists(int routeId) throws SQLException {
-        return routeService.getRoutes().stream().anyMatch(route -> route.getId() == routeId);
-    }
-
-    /**
-     * Exige un texto no vacío y lo devuelve sin espacios a los lados.
-     *
-     * @param value   texto recibido
-     * @param message mensaje si está vacío
-     * @return texto limpio
-     * @throws IllegalArgumentException si es null o está vacío
-     */
-    private String requireText(String value, String message) {
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(message);
-        }
-        return value.trim();
-    }
-
-    /**
-     * Limpia un texto opcional.
-     *
-     * @param value texto recibido
-     * @return texto sin espacios, o null si venía vacío
-     */
-    private String blankToNull(String value) {
-        return value == null || value.isBlank() ? null : value.trim();
+    /** Registra el error técnico y devuelve uno con mensaje para el usuario. */
+    private DataAccessException failure(String message, SQLException e) {
+        LOGGER.log(Level.SEVERE, "Fallo de base de datos en DriverService", e);
+        return new DataAccessException(message + " Revisa la conexión con la base de datos.", e);
     }
 }
