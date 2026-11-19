@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+<main class="container">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <div class="page-header">
+        <div>
+            <h1>Dashboard</h1>
+            <p class="muted">Totales del sistema, calculados en la base de datos.</p>
+        </div>
+        <a href="/admin/dashboard" class="btn btn-primary">Actualizar</a>
+    </div>
+    <section class="stats-grid" aria-label="Totales">
+        <article class="stat-card">
+            <h2>Conductores</h2>
+            <p class="stat-value" th:text="${totals.totalDrivers()}">0</p>
+            <p class="muted" th:text="${totals.activeDrivers()} + ' activos'">0 activos</p>
+        </article>
+        <article class="stat-card">
+            <h2>Vehículos</h2>
+            <p class="stat-value" th:text="${totals.totalVehicles()}">0</p>
+        </article>
+        <article class="stat-card">
+            <h2>Estaciones</h2>
+            <p class="stat-value" th:text="${totals.totalStations()}">0</p>
+        </article>
+        <article class="stat-card">
+            <h2>Rutas</h2>
+            <p class="stat-value" th:text="${totals.totalRoutes()}">0</p>
+        </article>
+        <article class="stat-card">
+            <h2>Pasajeros</h2>
+            <p class="stat-value" th:text="${totals.totalPassengers()}">0</p>
+        </article>
+        <article class="stat-card">
+            <h2>Tickets vendidos</h2>
+            <p class="stat-value" th:text="${totals.totalTickets()}">0</p>
+            <p class="muted" th:text="'Recaudo: ' + ${revenue}">Recaudo: $0</p>
+        </article>
+    </section>
+    <section class="card">
+        <h2>Estaciones de origen con más ventas</h2>
+        <p class="muted" th:if="${#lists.isEmpty(sales)}">Todavía no hay estaciones registradas.</p>
+        <div class="table-wrap" th:unless="${#lists.isEmpty(sales)}">
+            <table class="table">
+                <thead>
+                <tr><th scope="col">Estación</th><th scope="col">Tickets</th><th scope="col">Recaudo</th><th 
+scope="col" class="bar-column">Proporción</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="row : ${sales}">
+                    <td th:text="${row.stationName()}">Estación</td>
+                    <td th:text="${row.ticketsSold()}">0</td>
+<td th:text="${row.revenue()}">$0</td>
+<td class="bar-column">
+<span class="bar" th:style="'width:' + ${row.barPercent()} + '%'"></span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

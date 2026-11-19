@@ -1,66 +1,67 @@
 package com.vektra.service;
-
 import com.vektra.dao.DashboardDao;
+import com.vektra.exception.DataAccessException;
+import com.vektra.model.DashboardTotals;
+import com.vektra.model.StationSales;
+import com.vektra.security.AccessControl;
+import com.vektra.security.SessionUser;
 import java.sql.SQLException;
-
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 /**
- * Entrega al DashboardPanel los totales del sistema.
+ * Entrega los datos del dashboard. Solo lo puede ver el administrador.
  *
- * El panel solo habla con esta clase y nunca con el DAO. Si la base de datos
- * falla se propaga la SQLException, así el panel puede mostrar un error en
- * lugar de un cero engañoso.
+ * Si la base de datos falla lanza DataAccessException: la pantalla muestra
+ * el error en lugar de un cero engañoso.
  */
 public class DashboardService {
-
-    /** Acceso a los totales en la base de datos. */
+    /** Número de estaciones que aparecen en el ranking de ventas. */
+    public static final int TOP_ORIGINS_LIMIT = 5;
+    private static final Logger LOGGER = Logger.getLogger(DashboardService.class.getName());
+    private static final String LOAD_ERROR =
+            "No se pudieron cargar las métricas. Revisa la conexión con la base de datos.";
     private final DashboardDao dashboardDao;
-
     /**
-     * Crea el servicio con el DAO que usará.
-     *
-     * @param dashboardDao DAO de los totales del dashboard
+     * @param dashboardDao DAO de las vistas del dashboard
      */
     public DashboardService(DashboardDao dashboardDao) {
         this.dashboardDao = dashboardDao;
     }
-
     /**
-     * Total de conductores registrados.
+     * Totales del sistema.
      *
-     * @return número de conductores
-     * @throws SQLException si falla la consulta
+     * @param actor usuario de la sesión
+     * @return totales actuales
+     * @throws com.vektra.exception.AuthorizationException si no es administrador
+     * @throws DataAccessException si falla la base de datos
      */
-    public int getTotalDrivers() throws SQLException {
-        return dashboardDao.countDrivers();
+    public DashboardTotals getTotals(SessionUser actor) {
+        AccessControl.requireDashboardViewer(actor);
+        try {
+            return dashboardDao.findTotals();
+        } catch (SQLException e) {
+            throw failure(e);
+        }
     }
-
     /**
-     * Total de vehículos registrados.
+     * Estaciones de origen con más tickets vendidos.
      *
-     * @return número de vehículos
-     * @throws SQLException si falla la consulta
+     * @param actor usuario de la sesión
+     * @return hasta {@link #TOP_ORIGINS_LIMIT} estaciones
+     * @throws com.vektra.exception.AuthorizationException si no es administrador
+     * @throws DataAccessException si falla la base de datos
      */
-    public int getTotalVehicles() throws SQLException {
-        return dashboardDao.countVehicles();
+    public List<StationSales> getTopOrigins(SessionUser actor) {
+        AccessControl.requireDashboardViewer(actor);
+        try {
+            return dashboardDao.findTopOrigins(TOP_ORIGINS_LIMIT);
+        } catch (SQLException e) {
+            throw failure(e);
+        }
     }
-
-    /**
-     * Total de estaciones registradas.
-     *
-     * @return número de estaciones
-     * @throws SQLException si falla la consulta
-     */
-    public int getTotalStations() throws SQLException {
-        return dashboardDao.countStations();
-    }
-
-    /**
-     * Total de rutas registradas.
-     *
-     * @return número de rutas
-     * @throws SQLException si falla la consulta
-     */
-    public int getTotalRoutes() throws SQLException {
-        return dashboardDao.countRoutes();
+    private DataAccessException failure(SQLException e) {
+        LOGGER.log(Level.SEVERE, "Fallo de base de datos en DashboardService", e);
+        return new DataAccessException(LOAD_ERROR, e);
     }
 }

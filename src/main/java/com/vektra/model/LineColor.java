@@ -1,5 +1,7 @@
 package com.vektra.model;
 
+import java.awt.Color;
+
 /**
  * Líneas del metro de Vektra, identificadas por su color.
  *
@@ -42,6 +44,16 @@ public enum LineColor {
      */
     public String getHexCode() {
         return hexCode;
+    }
+
+    /**
+     * Color de la línea listo para pintar en Swing. Así ninguna vista
+     * tiene que escribir Color.decode (regla 21).
+     *
+     * @return color de la línea
+     */
+    public Color toColor() {
+        return Color.decode(hexCode);
     }
 
     /**
