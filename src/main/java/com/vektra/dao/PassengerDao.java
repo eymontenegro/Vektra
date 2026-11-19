@@ -18,8 +18,7 @@ import java.time.LocalDateTime;
 public class PassengerDao {
 private static final String SELECT_COLUMNS =
 "SELECT id, national_id, name, last_name, email, password, birth_date, registration_date FROM users ";
-private static final String INSERT = "INSERT INTO users (national_id, name, last_name, email, password, role, 
-"
+private static final String INSERT = "INSERT INTO users (national_id, name, last_name, email, password, role, "
 + "birth_date, registration_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 /**
 * Busca un pasajero por correo.
