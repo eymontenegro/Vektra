@@ -1,6 +1,7 @@
 # Finales de línea uniformes: el repositorio guarda LF y cada integrante
 # puede trabajar en Windows sin que Git marque archivos enteros como cambiados.
 * text=auto eol=lf
+
 # Binarios: Git no los toca
 *.png binary
 *.jpg binary
