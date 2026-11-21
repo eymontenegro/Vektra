@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <!--
   Piezas comunes de todas las páginas de Vektra. Cada página las incluye con
-  th:replace, así el menú y los mensajes se escriben una sola vez.
+  th:replace, así el menú, el logo y los mensajes se escriben una sola vez.
     head(title)  etiqueta <head> con el título, la hoja de estilos y forms.js
+    logo(size)   logo de Vektra (barra diagonal y cuatro círculos de las líneas)
     navbar       menú superior según el rol de la persona conectada
-    flash        mensajes de éxito o error pendientes
-    footer       pie de página-->
+    flash        mensajes de éxito o error pendientes, con botón para cerrarlos
+    footer       pie de página
+-->
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
+
 <head th:fragment="head(title)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -15,11 +18,23 @@
     <link rel="stylesheet" href="/css/vektra.css">
     <script src="/js/forms.js" defer></script>
 </head>
+
 <body>
+
+<!-- Logo: la barra diagonal y los círculos con los colores de las 4 líneas. -->
+<svg th:fragment="logo(size)" th:attr="width=${size},height=${size}" width="36" height="36"
+     viewBox="0 0 64 64" aria-hidden="true" class="logo-mark">
+    <rect x="30" y="2" width="13" height="62" rx="6.5" transform="rotate(24 36 33)" fill="#D9DDE3"></rect>
+    <circle cx="9" cy="13" r="5.5" fill="none" stroke="#27AE60" stroke-width="3.2"></circle>
+    <circle cx="14" cy="25" r="5.5" fill="none" stroke="#F39C12" stroke-width="3.2"></circle>
+    <circle cx="19" cy="37" r="5.5" fill="none" stroke="#E50822" stroke-width="3.2"></circle>
+    <circle cx="24" cy="49" r="5.5" fill="none" stroke="#3B9BFF" stroke-width="3.2"></circle>
+</svg>
+
 <header th:fragment="navbar" class="navbar">
-    <a class="navbar-brand" href="/map">
-        <img src="/images/vektra-logo.png" alt="" width="36" height="36">
-        <span>Vektra</span>
+    <a class="brand" href="/map" aria-label="Vektra, ir al mapa">
+        <svg th:replace="~{fragments/layout :: logo(34)}"></svg>
+        <span class="brand-name">Vektra</span>
     </a>
     <nav class="navbar-links" aria-label="Menú principal" th:if="${currentUser != null}">
         <a href="/map" th:classappend="${#strings.startsWith(currentPath, '/map')} ? 'active'">Mapa</a>
@@ -38,18 +53,42 @@
         <span th:text="'Hola, ' + ${currentUser.name()}">Hola</span>
         <form method="post" action="/logout">
             <input type="hidden" name="_csrf" th:value="${csrfToken}">
-            <button type="submit" class="btn btn-ghost">Cerrar sesión</button>
+            <button type="submit" class="btn btn-light">Cerrar sesión</button>
         </form>
     </div>
 </header>
+
 <div th:fragment="flash" class="flash-area" aria-live="polite">
     <div th:each="message : ${flashMessages}"
          th:class="'alert alert-' + ${message.type()}"
-         th:attr="role=${message.type() == 'error' ? 'alert' : 'status'}"
-         th:text="${message.text()}">Mensaje</div>
+         th:attr="role=${message.type() == 'error' ? 'alert' : 'status'}">
+        <svg th:if="${message.type() == 'success'}" class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="11" fill="#10B981"></circle>
+            <path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+        <svg th:if="${message.type() == 'error'}" class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="11" fill="#EF4444"></circle>
+            <path d="M12 6.5v7M12 17.2v.3" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"></path>
+        </svg>
+        <span class="alert-text" th:text="${message.text()}">Mensaje</span>
+        <button type="button" class="alert-close" data-dismiss="alert" aria-label="Cerrar mensaje">
+            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"></path></svg>
+        </button>
+    </div>
 </div>
+
+<!-- Alerta de error de un formulario (no se cierra: desaparece al corregir y enviar). -->
+<div th:fragment="formError(text)" class="alert alert-error" role="alert">
+    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="11" fill="#EF4444"></circle>
+        <path d="M12 6.5v7M12 17.2v.3" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"></path>
+    </svg>
+    <span class="alert-text" th:text="${text}">Error</span>
+</div>
+
 <footer th:fragment="footer" class="footer">
     <p>Vektra · Sistema de Metro Inteligente · Valledupar</p>
 </footer>
+
 </body>
 </html>
