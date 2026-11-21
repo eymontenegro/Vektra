@@ -1,9 +1,11 @@
 package com.vektra.security;
+
 import com.vektra.model.Passenger;
 import com.vektra.model.Role;
 import com.vektra.model.User;
 import java.io.Serializable;
 import java.util.Objects;
+
 /**
  * Persona que inició sesión, tal como se guarda en la sesión HTTP.
  *
@@ -17,7 +19,9 @@ import java.util.Objects;
  * @param role  rol de la cuenta (ADMIN o PASSENGER)
  */
 public record SessionUser(int id, String name, String email, Role role) implements Serializable {
+
     private static final long serialVersionUID = 1L;
+
     /**
      * Valida los datos obligatorios.
      *
@@ -27,6 +31,7 @@ public record SessionUser(int id, String name, String email, Role role) implemen
         Objects.requireNonNull(email, "email no puede ser nulo");
         Objects.requireNonNull(role, "role no puede ser nulo");
     }
+
     /**
      * Crea la sesión de un administrador.
      *
@@ -36,6 +41,7 @@ public record SessionUser(int id, String name, String email, Role role) implemen
     public static SessionUser fromAdmin(User admin) {
         return new SessionUser(admin.getId(), admin.getName(), admin.getEmail(), admin.getRole());
     }
+
     /**
      * Crea la sesión de un pasajero.
      *
@@ -46,14 +52,17 @@ public record SessionUser(int id, String name, String email, Role role) implemen
         return new SessionUser(passenger.getId(), passenger.getFullName(),
                 passenger.getEmail(), passenger.getRole());
     }
+
     /** @return true si puede gestionar conductores y vehículos */
     public boolean canManageFleet() {
         return role.canManageFleet();
     }
+
     /** @return true si puede comprar tickets */
     public boolean canBuyTickets() {
         return role.canBuyTickets();
     }
+
     /** @return true si puede ver el dashboard */
     public boolean canViewDashboard() {
         return role.canViewDashboard();

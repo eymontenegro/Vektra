@@ -11,14 +11,17 @@
  */
 (function () {
     'use strict';
+
     /** Centro de Valledupar, donde empieza el mapa antes de tener datos. */
     var VALLEDUPAR = [10.4631, -73.2532];
     var INITIAL_ZOOM = 13;
+
     function showNotice(message) {
         var notice = document.getElementById('mapNotice');
         notice.textContent = message;
         notice.hidden = false;
     }
+
     /** Contenido de una ventana emergente, armado sin innerHTML. */
     function popupContent(title, detail) {
         var container = document.createElement('div');
@@ -32,6 +35,7 @@
         }
         return container;
     }
+
     function drawRoutes(layer, routes) {
         routes.forEach(function (route) {
             L.polyline(route.path, {color: route.color, weight: 5, opacity: 0.85})
@@ -39,6 +43,7 @@
                 .addTo(layer);
         });
     }
+
     function drawStations(layer, stations) {
         stations.forEach(function (station) {
             var lines = station.lines.length > 0
@@ -51,6 +56,7 @@
                 .addTo(layer);
         });
     }
+
     /** Leyenda con un punto de color por cada línea que aparece en el mapa. */
     function drawLegend(routes) {
         var legend = document.getElementById('lineLegend');
@@ -72,6 +78,7 @@
             legend.appendChild(item);
         });
     }
+
     function start() {
         if (typeof L === 'undefined') {
             showNotice('El mapa necesita conexión a internet. Revisa tu conexión y recarga la página.');
@@ -83,6 +90,7 @@
             attribution: '&copy; colaboradores de OpenStreetMap'
         }).addTo(map);
         var layer = L.layerGroup().addTo(map);
+
         fetch('/api/map', {headers: {'Accept': 'application/json'}})
             .then(function (response) {
                 if (!response.ok) {
@@ -105,6 +113,7 @@
             .catch(function () {
                 showNotice('No se pudieron cargar las estaciones y rutas. Intenta de nuevo en unos minutos.');
             });
-}
-document.addEventListener('DOMContentLoaded', start);
+    }
+
+    document.addEventListener('DOMContentLoaded', start);
 })();

@@ -1,7 +1,9 @@
 package com.vektra.dao;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.vektra.connection.DatabaseConnection;
 import com.vektra.model.DashboardTotals;
 import com.vektra.model.Route;
@@ -13,6 +15,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+
 /**
  * Pruebas de integración contra una base PostgreSQL real con los datos de
  * prueba de DataBase/vektra.sql (versión 2).
@@ -23,12 +26,14 @@ import org.junit.jupiter.api.Test;
  */
 @Tag("database")
 class DatabaseIT {
+
     @Test
     void connectionOpens() throws Exception {
         try (Connection connection = DatabaseConnection.getConnection()) {
             assertTrue(connection.isValid(2));
         }
     }
+
     @Test
     void stationsAndRoutesMatchSeedData() throws Exception {
         List<Station> stations = new StationDao().findAll();
@@ -39,6 +44,7 @@ class DatabaseIT {
         assertEquals(4, routes.size());
         assertTrue(routes.stream().allMatch(route -> route.getStops().size() >= 2));
     }
+
     @Test
     void routeExistsById() throws Exception {
         Map<Integer, Station> byId = new StationDao().findAll().stream()
@@ -47,11 +53,12 @@ class DatabaseIT {
         assertTrue(new RouteDao().existsById(existingId));
         assertFalse(new RouteDao().existsById(-1));
     }
+
     @Test
     void dashboardViewReturnsTotals() throws Exception {
         DashboardTotals totals = new DashboardDao().findTotals();
-assertEquals(8, totals.totalStations());
-assertEquals(4, totals.totalRoutes());
-assertEquals(2, totals.totalVehicles());
-}
+        assertEquals(8, totals.totalStations());
+        assertEquals(4, totals.totalRoutes());
+        assertEquals(2, totals.totalVehicles());
+    }
 }

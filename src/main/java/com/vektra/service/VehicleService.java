@@ -1,4 +1,5 @@
 package com.vektra.service;
+
 import com.vektra.dao.VehicleDao;
 import com.vektra.exception.DataAccessException;
 import com.vektra.exception.NotFoundException;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 /**
  * Reglas de negocio de los vehículos. Los controladores solo hablan con esta clase.
  *
@@ -23,16 +25,21 @@ import java.util.logging.Logger;
  * falla la base de datos.
  */
 public class VehicleService {
+
     /** Largo máximo de la placa, igual que la columna plate. */
     private static final int MAX_PLATE_LENGTH = 15;
+
     /** Largo máximo de marca y modelo, igual que las columnas brand y model. */
     private static final int MAX_BRAND_MODEL_LENGTH = 60;
+
     private static final String UNIQUE_VIOLATION = "23505";
     private static final String FOREIGN_KEY_VIOLATION = "23503";
     private static final String CHECK_VIOLATION = "23514";
     private static final Logger LOGGER = Logger.getLogger(VehicleService.class.getName());
+
     /** Acceso a los vehículos en la base de datos. */
     private final VehicleDao vehicleDao;
+
     /**
      * Crea el servicio con el DAO que usará.
      *
@@ -41,6 +48,7 @@ public class VehicleService {
     public VehicleService(VehicleDao vehicleDao) {
         this.vehicleDao = vehicleDao;
     }
+
     /**
      * Lista los vehículos registrados con su conductor.
      *
@@ -55,6 +63,7 @@ public class VehicleService {
             throw failure("No se pudo cargar la lista de vehículos.", e);
         }
     }
+
     /**
      * Busca un vehículo por su id.
      *
@@ -75,6 +84,7 @@ public class VehicleService {
             throw failure("No se pudo cargar el vehículo.", e);
         }
     }
+
     /**
      * Registra un vehículo nuevo.
      *
@@ -105,6 +115,7 @@ public class VehicleService {
             throw translate(e, "No se pudo guardar el vehículo.");
         }
     }
+
     /**
      * Cambia los datos de un vehículo existente.
      *
@@ -136,6 +147,7 @@ public class VehicleService {
             throw translate(e, "No se pudo actualizar el vehículo.");
         }
     }
+
     /**
      * Borra un vehículo.
      *
@@ -153,6 +165,7 @@ public class VehicleService {
             throw failure("No se pudo borrar el vehículo.", e);
         }
     }
+
     /**
      * Valida los datos y arma el vehículo. El año, la capacidad, la línea y el
      * conductor los valida además el constructor de Vehicle.
@@ -174,12 +187,14 @@ public class VehicleService {
             throw new ValidationException(e.getMessage(), e);
         }
     }
+
     /** Comprueba que el conductor elegido todavía exista. */
     private void requireDriverExists(Driver driver) throws SQLException {
         if (!vehicleDao.driverExists(driver.getId())) {
             throw new ValidationException("El conductor seleccionado no existe.");
         }
     }
+
     /** Convierte los errores de restricciones en mensajes claros. */
     private RuntimeException translate(SQLException e, String message) {
         if (UNIQUE_VIOLATION.equals(e.getSQLState())) {
@@ -196,6 +211,7 @@ public class VehicleService {
         }
         return failure(message, e);
     }
+
     /** Registra el error técnico y devuelve uno con mensaje para el usuario. */
     private DataAccessException failure(String message, SQLException e) {
         LOGGER.log(Level.SEVERE, "Fallo de base de datos en VehicleService", e);

@@ -1,4 +1,5 @@
 package com.vektra.service;
+
 import com.vektra.dao.DriverDao;
 import com.vektra.exception.DataAccessException;
 import com.vektra.exception.NotFoundException;
@@ -12,6 +13,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 /**
  * Reglas de negocio de los conductores. Los controladores solo hablan con esta clase.
  *
@@ -22,17 +24,23 @@ import java.util.logging.Logger;
  * la base de datos.
  */
 public class DriverService {
+
     /** Largo máximo de la licencia, igual que la columna license_number. */
     private static final int MAX_LICENSE_LENGTH = 50;
+
     /** Largo máximo de nombres y apellidos, igual que las columnas de drivers. */
     private static final int MAX_NAME_LENGTH = 100;
+
     private static final String UNIQUE_VIOLATION = "23505";
     private static final String FOREIGN_KEY_VIOLATION = "23503";
     private static final Logger LOGGER = Logger.getLogger(DriverService.class.getName());
+
     /** Acceso a los conductores en la base de datos. */
     private final DriverDao driverDao;
+
     /** Se usa para comprobar que la ruta asignada existe. */
     private final RouteService routeService;
+
     /**
      * Crea el servicio con sus dependencias.
      *
@@ -43,6 +51,7 @@ public class DriverService {
         this.driverDao = driverDao;
         this.routeService = routeService;
     }
+
     /**
      * Lista los conductores registrados.
      *
@@ -57,6 +66,7 @@ public class DriverService {
             throw failure("No se pudo cargar la lista de conductores.", e);
         }
     }
+
     /**
      * Busca un conductor por su id.
      *
@@ -77,6 +87,7 @@ public class DriverService {
             throw failure("No se pudo cargar el conductor.", e);
         }
     }
+
     /**
      * Registra un conductor nuevo con estado activo.
      *
@@ -97,6 +108,7 @@ public class DriverService {
         String cleanLastName = InputValidator.requireText(lastName, "El apellido es obligatorio.");
         String cleanLicense = InputValidator.optionalText(licenseNumber);
         String cleanPhone = InputValidator.optionalText(phone);
+
         InputValidator.requirePattern(cleanNationalId, InputValidator.NATIONAL_ID,
                 "La cédula debe tener entre 6 y 12 dígitos, sin puntos ni espacios.");
         InputValidator.requireMaxLength(cleanName, MAX_NAME_LENGTH,
@@ -110,6 +122,7 @@ public class DriverService {
         if (!routeService.routeExists(routeId)) {
             throw new ValidationException("La ruta seleccionada no existe.");
         }
+
         try {
             if (driverDao.existsByNationalId(cleanNationalId)) {
                 throw new ValidationException("Ya existe un conductor con esa cédula.");
@@ -130,6 +143,7 @@ public class DriverService {
             throw failure("No se pudo guardar el conductor.", e);
         }
     }
+
     /**
      * Activa un conductor inactivo o desactiva uno activo.
      *
@@ -150,6 +164,7 @@ public class DriverService {
             throw failure("No se pudo cambiar el estado del conductor.", e);
         }
     }
+
     /**
      * Borra un conductor. No se puede borrar si tiene vehículos asignados.
      *
@@ -175,6 +190,7 @@ public class DriverService {
             throw failure("No se pudo borrar el conductor.", e);
         }
     }
+
     /** Registra el error técnico y devuelve uno con mensaje para el usuario. */
     private DataAccessException failure(String message, SQLException e) {
         LOGGER.log(Level.SEVERE, "Fallo de base de datos en DriverService", e);

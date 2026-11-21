@@ -1,4 +1,5 @@
 package com.vektra.web.controller;
+
 import com.vektra.exception.NotFoundException;
 import com.vektra.exception.ValidationException;
 import com.vektra.model.Driver;
@@ -19,34 +20,33 @@ import java.time.Year;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 /**
-* Gestión de vehículos para el administrador. Reemplaza a AddVehiclePanel y
-* agrega la lista, la edición y el borrado, que VehicleService ya tenía
-* (updateVehicle y deleteVehicle) pero ninguna pantalla usaba.
-*
-* Rutas:
-*   GET  /admin/vehicles               
-lista de vehículos
-*   GET  /admin/vehicles/new           
-*   POST /admin/vehicles               
-*   GET  /admin/vehicles/{id}/edit     
-*   POST /admin/vehicles/{id}          
-formulario de nuevo vehículo
-guarda el vehículo
-formulario de edición
-guarda los cambios
-*   POST /admin/vehicles/{id}/delete   borra el vehículo
-*/
+ * Gestión de vehículos para el administrador. Reemplaza a AddVehiclePanel y
+ * agrega la lista, la edición y el borrado, que VehicleService ya tenía
+ * (updateVehicle y deleteVehicle) pero ninguna pantalla usaba.
+ *
+ * Rutas:
+ *   GET  /admin/vehicles               lista de vehículos
+ *   GET  /admin/vehicles/new           formulario de nuevo vehículo
+ *   POST /admin/vehicles               guarda el vehículo
+ *   GET  /admin/vehicles/{id}/edit     formulario de edición
+ *   POST /admin/vehicles/{id}          guarda los cambios
+ *   POST /admin/vehicles/{id}/delete   borra el vehículo
+ */
 public class VehicleController implements Controller {
-private static final int UNPROCESSABLE = 422;
-private static final String LIST_PATH = "/admin/vehicles";
-private static final String[] FORM_FIELDS = {"plate", "brand", "model", "year", "capacity", "line", 
-"driverId"};
-/** Capacidad que propone el formulario nuevo, igual que AddVehiclePanel. */
-private static final String DEFAULT_CAPACITY = "50";
+
+    private static final int UNPROCESSABLE = 422;
+    private static final String LIST_PATH = "/admin/vehicles";
+    private static final String[] FORM_FIELDS = {"plate", "brand", "model", "year", "capacity", "line", "driverId"};
+
+    /** Capacidad que propone el formulario nuevo, igual que AddVehiclePanel. */
+    private static final String DEFAULT_CAPACITY = "50";
+
     private final VehicleService vehicleService;
     private final DriverService driverService;
     private final TemplateRenderer renderer;
+
     /**
      * Opción del selector de conductores.
      *
@@ -54,17 +54,18 @@ private static final String DEFAULT_CAPACITY = "50";
      * @param label nombre y cédula, igual que en AddVehiclePanel
      */
     public record DriverOption(int id, String label) { }
+
     /**
      * @param vehicleService reglas de los vehículos
      * @param driverService  conductores para el selector
      * @param renderer       motor de plantillas
      */
-    public VehicleController(VehicleService vehicleService, DriverService driverService, TemplateRenderer 
-renderer) {
+    public VehicleController(VehicleService vehicleService, DriverService driverService, TemplateRenderer renderer) {
         this.vehicleService = vehicleService;
         this.driverService = driverService;
         this.renderer = renderer;
     }
+
     @Override
     public void register(Javalin app) {
         app.get(LIST_PATH, this::list);
@@ -74,21 +75,25 @@ renderer) {
         app.post(LIST_PATH + "/{id}", this::update);
         app.post(LIST_PATH + "/{id}/delete", this::delete);
     }
+
     private void list(Context ctx) {
         SessionUser actor = WebSession.requireUser(ctx);
         renderer.render(ctx, "fleet/vehicles", Map.of("vehicles", vehicleService.getVehicles(actor)));
     }
+
     private void showCreateForm(Context ctx) {
         Map<String, String> form = new HashMap<>();
         form.put("year", String.valueOf(Year.now().getValue()));
         form.put("capacity", DEFAULT_CAPACITY);
         showForm(ctx, form, null, null);
     }
+
     private void showEditForm(Context ctx) {
         SessionUser actor = WebSession.requireUser(ctx);
         int id = pathId(ctx);
         showForm(ctx, toForm(vehicleService.getVehicle(actor, id)), id, null);
     }
+
     /**
      * Muestra el formulario de vehículo.
      *
@@ -112,6 +117,7 @@ renderer) {
         }
         renderer.render(ctx, "fleet/vehicle-form", model);
     }
+
     private void create(Context ctx) {
         SessionUser actor = WebSession.requireUser(ctx);
         Map<String, String> form = readForm(ctx);
@@ -126,6 +132,7 @@ renderer) {
             showForm(ctx, form, null, e.getMessage());
         }
     }
+
     private void update(Context ctx) {
         SessionUser actor = WebSession.requireUser(ctx);
         int id = pathId(ctx);
@@ -141,6 +148,7 @@ renderer) {
             showForm(ctx, form, id, e.getMessage());
         }
     }
+
     private void delete(Context ctx) {
         SessionUser actor = WebSession.requireUser(ctx);
         try {
@@ -151,8 +159,10 @@ renderer) {
         }
         ctx.redirect(LIST_PATH, HttpStatus.FOUND);
     }
+
     /** Datos del formulario ya convertidos a sus tipos. */
     private record VehicleInput(int year, int capacity, LineColor line, Driver driver) { }
+
     private VehicleInput parse(SessionUser actor, Map<String, String> form) {
         int year = InputValidator.requireInt(form.get("year"), "El año debe ser un número.");
         int capacity = InputValidator.requireInt(form.get("capacity"), "La capacidad debe ser un número.");
@@ -166,12 +176,14 @@ renderer) {
         Driver driver = driverService.getDriver(actor, driverId);
         return new VehicleInput(year, capacity, line, driver);
     }
+
     private List<DriverOption> driverOptions(SessionUser actor) {
         return driverService.getDrivers(actor).stream()
                 .map(driver -> new DriverOption(driver.getId(),
                         driver.getFullName() + " - " + driver.getNationalId()))
                 .toList();
     }
+
     private static Map<String, String> toForm(Vehicle vehicle) {
         Map<String, String> form = new HashMap<>();
         form.put("plate", vehicle.getPlate());
@@ -183,6 +195,7 @@ renderer) {
         form.put("driverId", String.valueOf(vehicle.getDriver().getId()));
         return form;
     }
+
     private static Map<String, String> readForm(Context ctx) {
         Map<String, String> form = new HashMap<>();
         for (String field : FORM_FIELDS) {
@@ -191,6 +204,7 @@ renderer) {
         }
         return form;
     }
+
     private static int pathId(Context ctx) {
         return InputValidator.requireInt(ctx.pathParam("id"), "El vehículo seleccionado no es válido.");
     }

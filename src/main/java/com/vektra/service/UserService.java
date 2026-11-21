@@ -1,14 +1,17 @@
 package com.vektra.service;
+
 import com.vektra.dao.UserDao;
 import com.vektra.exception.DataAccessException;
 import com.vektra.exception.ValidationException;
 import com.vektra.model.User;
 import com.vektra.util.InputValidator;
 import org.mindrot.jbcrypt.BCrypt;
+
 import java.sql.SQLException;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 /**
  * Reglas de negocio de la cuenta del administrador: autenticación.
  * El administrador no se registra desde la aplicación; lo crea el script SQL.
@@ -17,14 +20,19 @@ import java.util.logging.Logger;
  * coinciden, y {@link DataAccessException} si falla la base de datos.
  */
 public class UserService {
+
     private static final Logger LOGGER = Logger.getLogger(UserService.class.getName());
+
     /** Mismo mensaje si el correo no existe o la clave está mal: no se revela cuál falló. */
     static final String INVALID_CREDENTIALS = "Correo o contraseña incorrectos.";
+
     private final UserDao userDao;
+
     /** @param userDao acceso a datos del administrador */
     public UserService(UserDao userDao) {
         this.userDao = Objects.requireNonNull(userDao, "userDao no puede ser nulo");
     }
+
     /**
      * Verifica correo y contraseña del administrador.
      *

@@ -1,9 +1,13 @@
 package com.vektra.web;
+
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.Test;
+
 /** Pruebas de las rutas públicas. */
 class AccessFilterTest {
+
     @Test
     void loginRegisterAndStaticFilesArePublic() {
         assertTrue(AccessFilter.isPublic("/login"));
@@ -11,6 +15,7 @@ class AccessFilterTest {
         assertTrue(AccessFilter.isPublic("/css/vektra.css"));
         assertTrue(AccessFilter.isPublic("/images/vektra-logo.png"));
     }
+
     @Test
     void applicationPagesNeedSession() {
         assertFalse(AccessFilter.isPublic("/map"));

@@ -1,4 +1,5 @@
 package com.vektra.web;
+
 import io.javalin.http.Context;
 import java.util.HashMap;
 import java.util.Locale;
@@ -6,19 +7,23 @@ import java.util.Map;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
+
 /**
-* Convierte las plantillas HTML de src/main/resources/templates en la
-* página que recibe el navegador, usando Thymeleaf.
-*
-* Agrega a todas las páginas los datos comunes: la persona conectada, el
-* token CSRF de los formularios, los mensajes pendientes y la ruta actual
-* (para marcar el menú). Thymeleaf escapa todo texto que se muestra con
-* th:text, así un dato del usuario nunca se ejecuta como HTML.
+ * Convierte las plantillas HTML de src/main/resources/templates en la
+ * página que recibe el navegador, usando Thymeleaf.
+ *
+ * Agrega a todas las páginas los datos comunes: la persona conectada, el
+ * token CSRF de los formularios, los mensajes pendientes y la ruta actual
+ * (para marcar el menú). Thymeleaf escapa todo texto que se muestra con
+ * th:text, así un dato del usuario nunca se ejecuta como HTML.
  */
 public final class TemplateRenderer {
+
     /** Idioma de las páginas. */
     private static final Locale SPANISH_COLOMBIA = Locale.forLanguageTag("es-CO");
+
     private final TemplateEngine engine;
+
     /**
      * @param cacheTemplates true en producción; false mientras se desarrolla,
      *                       para ver los cambios del HTML sin reiniciar
@@ -33,6 +38,7 @@ public final class TemplateRenderer {
         engine = new TemplateEngine();
         engine.setTemplateResolver(resolver);
     }
+
     /**
      * Genera una página y la envía al navegador.
      *
@@ -51,6 +57,7 @@ public final class TemplateRenderer {
         ctx.contentType("text/html; charset=utf-8");
         ctx.result(engine.process(template, thymeleafContext));
     }
+
     /**
      * Genera una página sin datos propios.
      *

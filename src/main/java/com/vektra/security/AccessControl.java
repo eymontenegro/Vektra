@@ -1,5 +1,7 @@
 package com.vektra.security;
+
 import com.vektra.exception.AuthorizationException;
+
 /**
  * Comprobaciones de permisos que usan los servicios.
  *
@@ -8,9 +10,11 @@ import com.vektra.exception.AuthorizationException;
  * quién la pide (SessionUser) y la comprobación vive aquí.
  */
 public final class AccessControl {
+
     /** Constructor privado: esta clase solo tiene métodos estáticos. */
     private AccessControl() {
     }
+
     /**
      * Exige que haya una sesión iniciada.
      *
@@ -24,6 +28,7 @@ public final class AccessControl {
         }
         return actor;
     }
+
     /**
      * Exige permiso para gestionar conductores y vehículos.
      *
@@ -35,6 +40,7 @@ public final class AccessControl {
             throw new AuthorizationException("Solo el administrador puede gestionar conductores y vehículos.");
         }
     }
+
     /**
      * Exige permiso para ver el dashboard.
      *
@@ -46,6 +52,7 @@ public final class AccessControl {
             throw new AuthorizationException("Solo el administrador puede ver el dashboard.");
         }
     }
+
     /**
      * Exige que la sesión sea de un pasajero.
      *
@@ -54,7 +61,7 @@ public final class AccessControl {
      */
     public static void requirePassenger(SessionUser actor) {
         if (!requireLoggedIn(actor).canBuyTickets()) {
-throw new AuthorizationException("Inicia sesión como pasajero para usar los tickets.");
-}
-}
+            throw new AuthorizationException("Inicia sesión como pasajero para usar los tickets.");
+        }
+    }
 }

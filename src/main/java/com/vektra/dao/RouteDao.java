@@ -1,4 +1,5 @@
 package com.vektra.dao;
+
 import com.vektra.connection.DatabaseConnection;
 import com.vektra.model.LineColor;
 import com.vektra.model.Route;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 /**
  * Consulta las rutas del metro con sus estaciones intermedias.
  *
@@ -19,19 +21,23 @@ import java.util.Map;
  * de StationDao.
  */
 public class RouteDao {
+
     private static final String SELECT_ROUTES = """
             SELECT id, origin_station_id, destination_station_id,
                    line_color, travel_minutes, kilometers, transfers
             FROM routes
             ORDER BY id
             """;
+
     /** Estaciones intermedias de todas las rutas, en el orden en que se recorren. */
     private static final String SELECT_INTERMEDIATE_STATIONS = """
             SELECT route_id, station_id
             FROM route_stations
             ORDER BY route_id, position
             """;
+
     private static final String SELECT_EXISTS = "SELECT 1 FROM routes WHERE id = ?";
+
     /**
      * Devuelve todas las rutas.
      *
@@ -54,6 +60,7 @@ public class RouteDao {
         }
         return routes;
     }
+
     /**
      * Indica si existe una ruta con ese id. Reemplaza la comprobación que
      * hacía DriverService cargando todas las rutas y todas las estaciones
@@ -72,6 +79,7 @@ public class RouteDao {
             }
         }
     }
+
     /**
      * Lee las estaciones intermedias de todas las rutas en una sola consulta.
      *
@@ -94,6 +102,7 @@ public class RouteDao {
         }
         return intermediatesByRoute;
     }
+
     /**
      * Convierte la fila actual en una ruta.
      *
@@ -122,20 +131,20 @@ public class RouteDao {
             throw new SQLException("La ruta " + id + " tiene datos no válidos en la base de datos.", e);
         }
     }
-/**
-* Busca una estación por id y falla con un mensaje claro si no está.
-*
-* @param stationsById estaciones existentes, indexadas por su id
-* @param stationId    
-id de la estación buscada
-* @return estación encontrada
-* @throws SQLException si la estación no existe
-*/
-private Station requireStation(Map<Integer, Station> stationsById, int stationId) throws SQLException {
-Station station = stationsById.get(stationId);
-if (station == null) {
-throw new SQLException("Una ruta apunta a la estación " + stationId + ", que no existe.");
-}
-return station;
-}
+
+    /**
+     * Busca una estación por id y falla con un mensaje claro si no está.
+     *
+     * @param stationsById estaciones existentes, indexadas por su id
+     * @param stationId    id de la estación buscada
+     * @return estación encontrada
+     * @throws SQLException si la estación no existe
+     */
+    private Station requireStation(Map<Integer, Station> stationsById, int stationId) throws SQLException {
+        Station station = stationsById.get(stationId);
+        if (station == null) {
+            throw new SQLException("Una ruta apunta a la estación " + stationId + ", que no existe.");
+        }
+        return station;
+    }
 }

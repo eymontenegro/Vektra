@@ -1,4 +1,5 @@
 package com.vektra.dao;
+
 import com.vektra.connection.DatabaseConnection;
 import com.vektra.model.DashboardTotals;
 import com.vektra.model.StationSales;
@@ -19,17 +20,20 @@ import java.util.List;
  * SQLException, de modo que un error nunca se confunde con un total de cero.
  */
 public class DashboardDao {
+
     private static final String SELECT_TOTALS = """
             SELECT total_drivers, active_drivers, total_vehicles, total_stations,
                    total_routes, total_passengers, total_tickets, total_revenue
             FROM v_dashboard_totals
             """;
+
     private static final String SELECT_TOP_ORIGINS = """
             SELECT station_name, tickets_sold, revenue
             FROM v_ticket_sales_by_origin
             ORDER BY tickets_sold DESC, station_name
             LIMIT ?
             """;
+
     /**
      * Lee todos los totales del sistema.
      *
@@ -54,6 +58,7 @@ public class DashboardDao {
                     resultSet.getBigDecimal("total_revenue"));
         }
     }
+
     /**
      * Estaciones de origen con más tickets vendidos.
      *
