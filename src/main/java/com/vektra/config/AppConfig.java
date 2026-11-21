@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 /**
  * Configuración única de Vektra.
  *
@@ -22,15 +23,21 @@ import java.util.logging.Logger;
  * src/main/resources se empaquetaría dentro del .jar con las claves.
  */
 public final class AppConfig {
+
     /** Nombre del archivo de configuración. */
     public static final String CONFIG_FILE = "config.properties";
+
     /** Propiedad del sistema que permite indicar otra ruta del archivo. */
     public static final String CONFIG_PATH_PROPERTY = "vektra.config";
+
     private static final Logger LOGGER = Logger.getLogger(AppConfig.class.getName());
+
     /** Configuración global, cargada la primera vez que se pide. */
     private static volatile AppConfig global;
+
     private final Properties fileProperties;
     private final Map<String, String> environment;
+
     /**
      * Crea una configuración con datos ya cargados. Las pruebas la usan
      * para no depender del archivo real ni del entorno de la máquina.
@@ -42,6 +49,7 @@ public final class AppConfig {
         this.fileProperties = fileProperties == null ? new Properties() : fileProperties;
         this.environment = environment == null ? Map.of() : environment;
     }
+
     /**
      * Devuelve la configuración de la aplicación, leyéndola una sola vez.
      *
@@ -60,6 +68,7 @@ public final class AppConfig {
         }
         return current;
     }
+
     /**
      * Busca un dato. Primero en el entorno y luego en el archivo.
      *
@@ -77,6 +86,7 @@ public final class AppConfig {
         }
         return Optional.empty();
     }
+
     /**
      * Busca un dato obligatorio.
      *
@@ -89,6 +99,7 @@ public final class AppConfig {
                 "Falta la configuración '" + key + "'. Agréguela a " + CONFIG_FILE
                         + " o defina la variable de entorno " + toEnvironmentName(key) + "."));
     }
+
     /**
      * Busca un dato numérico.
      *
@@ -108,6 +119,7 @@ public final class AppConfig {
             throw new IllegalStateException("La configuración '" + key + "' debe ser un número.", e);
         }
     }
+
     /**
      * Convierte el nombre de un dato en el de su variable de entorno:
      * db.url pasa a DB_URL.
@@ -118,13 +130,13 @@ public final class AppConfig {
     static String toEnvironmentName(String key) {
         return key.toUpperCase().replace('.', '_');
     }
+
     /** Lee el archivo de configuración; si no existe devuelve datos vacíos. */
     private static Properties loadFile() {
         Properties properties = new Properties();
         Path file = Path.of(System.getProperty(CONFIG_PATH_PROPERTY, CONFIG_FILE));
         if (!Files.isRegularFile(file)) {
-            LOGGER.log(Level.INFO, "No se encontró {0}; se usarán las variables de entorno.", 
-file.toAbsolutePath());
+            LOGGER.log(Level.INFO, "No se encontró {0}; se usarán las variables de entorno.", file.toAbsolutePath());
             return properties;
         }
         try (InputStream input = Files.newInputStream(file)) {
