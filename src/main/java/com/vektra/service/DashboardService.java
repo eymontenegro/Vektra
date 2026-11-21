@@ -1,4 +1,5 @@
 package com.vektra.service;
+
 import com.vektra.dao.DashboardDao;
 import com.vektra.exception.DataAccessException;
 import com.vektra.model.DashboardTotals;
@@ -9,6 +10,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 /**
  * Entrega los datos del dashboard. Solo lo puede ver el administrador.
  *
@@ -16,18 +18,24 @@ import java.util.logging.Logger;
  * el error en lugar de un cero engañoso.
  */
 public class DashboardService {
+
     /** Número de estaciones que aparecen en el ranking de ventas. */
     public static final int TOP_ORIGINS_LIMIT = 5;
+
     private static final Logger LOGGER = Logger.getLogger(DashboardService.class.getName());
+
     private static final String LOAD_ERROR =
             "No se pudieron cargar las métricas. Revisa la conexión con la base de datos.";
+
     private final DashboardDao dashboardDao;
+
     /**
      * @param dashboardDao DAO de las vistas del dashboard
      */
     public DashboardService(DashboardDao dashboardDao) {
         this.dashboardDao = dashboardDao;
     }
+
     /**
      * Totales del sistema.
      *
@@ -44,6 +52,7 @@ public class DashboardService {
             throw failure(e);
         }
     }
+
     /**
      * Estaciones de origen con más tickets vendidos.
      *
@@ -60,6 +69,7 @@ public class DashboardService {
             throw failure(e);
         }
     }
+
     private DataAccessException failure(SQLException e) {
         LOGGER.log(Level.SEVERE, "Fallo de base de datos en DashboardService", e);
         return new DataAccessException(LOAD_ERROR, e);
