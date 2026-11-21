@@ -1,4 +1,3 @@
-
 -- =========================================================
 -- VEKTRA - Pruebas de integridad de la base de datos
 --
