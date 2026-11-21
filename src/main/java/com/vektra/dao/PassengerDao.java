@@ -1,7 +1,9 @@
 package com.vektra.dao;
+
 import com.vektra.connection.DatabaseConnection;
 import com.vektra.model.Passenger;
 import com.vektra.model.Role;
+
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -10,26 +12,30 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
 /**
-* Acceso a datos de los pasajeros (tabla {@code users}, rol PASSENGER).
-* Los métodos lanzan {@link SQLException} para que el Service pueda distinguir
-* un fallo de base de datos de unas credenciales incorrectas.
-*/
+ * Acceso a datos de los pasajeros (tabla {@code users}, rol PASSENGER).
+ * Los métodos lanzan {@link SQLException} para que el Service pueda distinguir
+ * un fallo de base de datos de unas credenciales incorrectas.
+ */
 public class PassengerDao {
-private static final String SELECT_COLUMNS =
-"SELECT id, national_id, name, last_name, email, password, birth_date, registration_date FROM users ";
-private static final String INSERT = "INSERT INTO users (national_id, name, last_name, email, password, role, "
-+ "birth_date, registration_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-/**
-* Busca un pasajero por correo.
-*
-* @param email correo ya normalizado en minúsculas
-* @return el pasajero, o null si no existe
-* @throws SQLException si falla la consulta
-*/
-public Passenger findByEmail(String email) throws SQLException {
-String sql = SELECT_COLUMNS + "WHERE email = ? AND role = ?";
-try (Connection con = DatabaseConnection.getConnection();
+
+    private static final String SELECT_COLUMNS =
+            "SELECT id, national_id, name, last_name, email, password, birth_date, registration_date FROM users ";
+
+    private static final String INSERT = "INSERT INTO users (national_id, name, last_name, email, password, role, "
+            + "birth_date, registration_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+    /**
+     * Busca un pasajero por correo.
+     *
+     * @param email correo ya normalizado en minúsculas
+     * @return el pasajero, o null si no existe
+     * @throws SQLException si falla la consulta
+     */
+    public Passenger findByEmail(String email) throws SQLException {
+        String sql = SELECT_COLUMNS + "WHERE email = ? AND role = ?";
+        try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, email);
             ps.setString(2, Role.PASSENGER.name());
@@ -38,6 +44,7 @@ try (Connection con = DatabaseConnection.getConnection();
             }
         }
     }
+
     /**
      * Busca un pasajero por su id. La usa la web para recuperar los datos
      * completos del pasajero que tiene la sesión.
@@ -57,6 +64,7 @@ try (Connection con = DatabaseConnection.getConnection();
             }
         }
     }
+
     /**
      * Indica si ya hay una cuenta con ese correo (de cualquier rol).
      *
@@ -67,6 +75,7 @@ try (Connection con = DatabaseConnection.getConnection();
     public boolean existsByEmail(String email) throws SQLException {
         return exists("SELECT 1 FROM users WHERE email = ?", email);
     }
+
     /**
      * Indica si ya hay una cuenta con esa cédula.
      *
@@ -77,6 +86,7 @@ try (Connection con = DatabaseConnection.getConnection();
     public boolean existsByNationalId(String nationalId) throws SQLException {
         return exists("SELECT 1 FROM users WHERE national_id = ?", nationalId);
     }
+
     /**
      * Guarda un pasajero nuevo y le asigna el id generado.
      *
@@ -95,8 +105,8 @@ try (Connection con = DatabaseConnection.getConnection();
             ps.setString(6, Role.PASSENGER.name());
             ps.setDate(7, passenger.getBirthDate() == null ? null : Date.valueOf(passenger.getBirthDate()));
             ps.setTimestamp(8, Timestamp.valueOf(
-                    passenger.getRegistrationDate() == null ? LocalDateTime.now() : 
-passenger.getRegistrationDate()));
+                    passenger.getRegistrationDate() == null ? LocalDateTime.now() : passenger.getRegistrationDate()));
+
             if (ps.executeUpdate() == 0) {
                 return false;
             }
@@ -108,6 +118,7 @@ passenger.getRegistrationDate()));
             return true;
         }
     }
+
     /** Ejecuta una consulta de existencia con un solo parámetro de texto. */
     private boolean exists(String sql, String value) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
@@ -118,6 +129,7 @@ passenger.getRegistrationDate()));
             }
         }
     }
+
     /** Convierte la fila actual en un pasajero. */
     private Passenger mapRow(ResultSet rs) throws SQLException {
         Date birth = rs.getDate("birth_date");
