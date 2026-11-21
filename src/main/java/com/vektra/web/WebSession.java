@@ -5,19 +5,23 @@ import io.javalin.http.Context;
 import jakarta.servlet.http.HttpSession;
 
 /**
-* Guarda y lee la persona conectada en la sesión HTTP del navegador.
-*
-* Reemplaza a UserSession: cada navegador tiene su propia sesión, de modo
-* que dos personas pueden usar Vektra al mismo tiempo sin mezclarse.
-*/
+ * Guarda y lee la persona conectada en la sesión HTTP del navegador.
+ *
+ * Reemplaza a UserSession: cada navegador tiene su propia sesión, de modo
+ * que dos personas pueden usar Vektra al mismo tiempo sin mezclarse.
+ */
 public final class WebSession {
+
     /** Clave de la sesión donde se guarda el SessionUser. */
     private static final String USER_KEY = "vektra.user";
+
     /** Minutos sin actividad antes de que la sesión expire. */
     private static final int TIMEOUT_MINUTES = 30;
+
     /** Constructor privado: esta clase solo tiene métodos estáticos. */
     private WebSession() {
     }
+
     /**
      * Persona conectada.
      *
@@ -32,6 +36,7 @@ public final class WebSession {
         Object user = session.getAttribute(USER_KEY);
         return user instanceof SessionUser sessionUser ? sessionUser : null;
     }
+
     /**
      * Persona conectada, obligatoria.
      *
@@ -46,6 +51,7 @@ public final class WebSession {
         }
         return user;
     }
+
     /**
      * Inicia la sesión. Cambia el id de la sesión para que nadie pueda
      * reutilizar uno que obtuvo antes del inicio de sesión (fijación de sesión).
@@ -60,15 +66,16 @@ public final class WebSession {
         session.setAttribute(USER_KEY, user);
         CsrfProtection.reset(session);
     }
+
     /**
      * Cierra la sesión y borra todos sus datos.
      *
      * @param ctx petición actual
      */
     public static void logout(Context ctx) {
-HttpSession session = ctx.req().getSession(false);
-if (session != null) {
-session.invalidate();
-}
-}
+        HttpSession session = ctx.req().getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+    }
 }
