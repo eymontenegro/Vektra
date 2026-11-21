@@ -1,4 +1,5 @@
 package com.vektra.web;
+
 import com.vektra.exception.AuthorizationException;
 import io.javalin.http.Context;
 import io.javalin.http.HandlerType;
@@ -7,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
+
 /**
  * Protección contra CSRF (que otra página envíe formularios a Vektra
  * usando la sesión de la persona).
@@ -16,16 +18,21 @@ import java.util.Base64;
  * si no coincide, la petición se rechaza.
  */
 public final class CsrfProtection {
+
     /** Nombre del campo oculto de los formularios. */
     public static final String FORM_FIELD = "_csrf";
+
     /** Nombre de la cabecera para peticiones hechas con fetch(). */
     public static final String HEADER = "X-CSRF-Token";
+
     private static final String SESSION_KEY = "vektra.csrf";
     private static final int TOKEN_BYTES = 32;
     private static final SecureRandom RANDOM = new SecureRandom();
+
     /** Constructor privado: esta clase solo tiene métodos estáticos. */
     private CsrfProtection() {
     }
+
     /**
      * Token de la sesión actual; lo crea si todavía no existe.
      *
@@ -44,6 +51,7 @@ public final class CsrfProtection {
         session.setAttribute(SESSION_KEY, created);
         return created;
     }
+
     /**
      * Borra el token de la sesión para que se cree uno nuevo. WebSession la
      * llama al iniciar sesión, así un token visto antes del login deja de servir.
@@ -53,6 +61,7 @@ public final class CsrfProtection {
     static void reset(HttpSession session) {
         session.removeAttribute(SESSION_KEY);
     }
+
     /**
      * Comprueba el token en toda petición que cambia datos (POST).
      * Se registra como filtro "before" en WebServer.
