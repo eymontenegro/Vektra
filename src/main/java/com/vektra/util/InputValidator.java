@@ -1,6 +1,8 @@
 package com.vektra.util;
+
 import com.vektra.exception.ValidationException;
 import java.util.regex.Pattern;
+
 /**
  * Validaciones de texto que comparten todos los servicios.
  *
@@ -9,15 +11,20 @@ import java.util.regex.Pattern;
  * ValidationException con el mensaje que se le pase, en español.
  */
 public final class InputValidator {
+
     /** Solo dígitos, entre 6 y 12: cédula (igual que la base de datos). */
     public static final Pattern NATIONAL_ID = Pattern.compile("\\d{6,12}");
+
     /** Solo dígitos, entre 7 y 15: teléfono (igual que la base de datos). */
     public static final Pattern PHONE = Pattern.compile("\\d{7,15}");
+
     /** Formato básico de correo: algo@algo.algo */
     public static final Pattern EMAIL = Pattern.compile("^[\\w.+-]+@[\\w.-]+\\.[a-zA-Z]{2,}$");
+
     /** Constructor privado: esta clase solo tiene métodos estáticos. */
     private InputValidator() {
     }
+
     /**
      * Quita los espacios de los extremos.
      *
@@ -27,6 +34,7 @@ public final class InputValidator {
     public static String clean(String value) {
         return value == null ? "" : value.trim();
     }
+
     /**
      * Exige un texto no vacío.
      *
@@ -42,6 +50,7 @@ public final class InputValidator {
         }
         return cleanValue;
     }
+
     /**
      * Limpia un texto opcional.
      *
@@ -52,6 +61,7 @@ public final class InputValidator {
         String cleanValue = clean(value);
         return cleanValue.isEmpty() ? null : cleanValue;
     }
+
     /**
      * Exige que un texto no pase de cierto largo (el de su columna en la base).
      *
@@ -67,6 +77,7 @@ public final class InputValidator {
         }
         return value;
     }
+
     /**
      * Exige que un texto cumpla un patrón.
      *
@@ -82,6 +93,7 @@ public final class InputValidator {
         }
         return value;
     }
+
     /**
      * Convierte un texto en un número entero.
      *
