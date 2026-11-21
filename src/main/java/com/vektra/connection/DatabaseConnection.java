@@ -1,8 +1,10 @@
 package com.vektra.connection;
+
 import com.vektra.config.AppConfig;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+
 /**
  * Única forma de abrir una conexión con la base de datos PostgreSQL.
  *
@@ -11,11 +13,14 @@ import java.sql.SQLException;
  * pide debe cerrarla con try-with-resources.
  */
 public final class DatabaseConnection {
+
     /** Segundos máximos de espera para conectarse antes de dar error. */
     private static final int LOGIN_TIMEOUT_SECONDS = 5;
+
     /** Constructor privado: esta clase solo tiene métodos estáticos y no se instancia. */
     private DatabaseConnection() {
     }
+
     /**
      * Abre una conexión nueva con la base de datos.
      *
