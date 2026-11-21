@@ -1,4 +1,5 @@
 package com.vektra.service;
+
 import com.vektra.dao.PassengerDao;
 import com.vektra.exception.DataAccessException;
 import com.vektra.exception.NotFoundException;
@@ -6,11 +7,13 @@ import com.vektra.exception.ValidationException;
 import com.vektra.model.Passenger;
 import com.vektra.util.InputValidator;
 import org.mindrot.jbcrypt.BCrypt;
+
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 /**
  * Reglas de negocio del pasajero: registro, autenticación y consulta.
  * <p>
@@ -19,22 +22,31 @@ import java.util.logging.Logger;
  * base de datos. El mensaje de cada excepción se puede mostrar al usuario.
  */
 public class PassengerService {
+
     /** Longitud mínima de contraseña; el formulario HTML usa esta misma constante. */
     public static final int MIN_PASSWORD_LENGTH = 8;
+
     /** Longitud máxima de contraseña: BCrypt solo usa los primeros 72 bytes. */
     public static final int MAX_PASSWORD_LENGTH = 72;
+
     /** Largo máximo de nombres y apellidos, igual que las columnas de users. */
     private static final int MAX_NAME_LENGTH = 100;
+
     /** Largo máximo del correo, igual que la columna email. */
     private static final int MAX_EMAIL_LENGTH = 150;
+
     private static final Logger LOGGER = Logger.getLogger(PassengerService.class.getName());
+
     /** Código SQLSTATE de PostgreSQL para una violación de restricción UNIQUE. */
     private static final String UNIQUE_VIOLATION = "23505";
+
     private final PassengerDao passengerDao;
+
     /** @param passengerDao acceso a datos del pasajero */
     public PassengerService(PassengerDao passengerDao) {
         this.passengerDao = passengerDao;
     }
+
     /**
      * Registra un pasajero nuevo. La contraseña se guarda con hash BCrypt.
      *
@@ -54,7 +66,9 @@ public class PassengerService {
         String cleanName = InputValidator.clean(name);
         String cleanLastName = InputValidator.clean(lastName);
         String cleanEmail = InputValidator.clean(email).toLowerCase();
+
         validateRegistration(cleanId, cleanName, cleanLastName, cleanEmail, password, birthDate);
+
         try {
             if (passengerDao.existsByEmail(cleanEmail)) {
                 throw new ValidationException("Ese correo ya está registrado.");
@@ -76,6 +90,7 @@ public class PassengerService {
             throw databaseFailure(e);
         }
     }
+
     /**
      * Verifica correo y contraseña de un pasajero.
      *
@@ -100,6 +115,7 @@ public class PassengerService {
             throw databaseFailure(e);
         }
     }
+
     /**
      * Busca un pasajero por su id.
      *
@@ -119,6 +135,7 @@ public class PassengerService {
             throw databaseFailure(e);
         }
     }
+
     /** Valida los datos de registro ya limpios; lanza con el mensaje del primer dato inválido. */
     private void validateRegistration(String nationalId, String name, String lastName,
                                       String email, String password, LocalDate birthDate) {
@@ -145,6 +162,7 @@ public class PassengerService {
             throw new ValidationException("La fecha de nacimiento no es válida.");
         }
     }
+
     /** Registra el error en el log y devuelve una excepción con mensaje para el usuario. */
     private DataAccessException databaseFailure(SQLException e) {
         LOGGER.log(Level.SEVERE, "Fallo de base de datos en PassengerService", e);
