@@ -1,4 +1,5 @@
 package com.vektra.web.controller;
+
 import com.vektra.exception.DataAccessException;
 import com.vektra.exception.ValidationException;
 import com.vektra.model.Passenger;
@@ -19,30 +20,32 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.Map;
+
 /**
-* Inicio de sesión, registro de pasajeros y cierre de sesión.
-* Reemplaza a LoginFrame y CreateAccountFrame.
-*
-* Rutas:
-*   GET  /          
-redirige al mapa
-*   GET  /login     
-*   POST /login     
-formulario de inicio de sesión
-valida las credenciales
-*   GET  /register  formulario de crear cuenta
-*   POST /register  registra al pasajero
-*   POST /logout    cierra la sesión
-*/
+ * Inicio de sesión, registro de pasajeros y cierre de sesión.
+ * Reemplaza a LoginFrame y CreateAccountFrame.
+ *
+ * Rutas:
+ *   GET  /          redirige al mapa
+ *   GET  /login     formulario de inicio de sesión
+ *   POST /login     valida las credenciales
+ *   GET  /register  formulario de crear cuenta
+ *   POST /register  registra al pasajero
+ *   POST /logout    cierra la sesión
+ */
 public class AuthController implements Controller {
-/** Código HTTP para un formulario con datos inválidos que se vuelve a mostrar. */
-private static final int UNPROCESSABLE = 422;
-/** Valor del selector "Tipo de usuario" para el administrador. */
-private static final String ADMIN_OPTION = "ADMIN";
-private final UserService userService;
-private final PassengerService passengerService;
-private final LoginAttemptLimiter loginLimiter;
-private final TemplateRenderer renderer;
+
+    /** Código HTTP para un formulario con datos inválidos que se vuelve a mostrar. */
+    private static final int UNPROCESSABLE = 422;
+
+    /** Valor del selector "Tipo de usuario" para el administrador. */
+    private static final String ADMIN_OPTION = "ADMIN";
+
+    private final UserService userService;
+    private final PassengerService passengerService;
+    private final LoginAttemptLimiter loginLimiter;
+    private final TemplateRenderer renderer;
+
     /**
      * @param userService      autenticación del administrador
      * @param passengerService registro y autenticación de pasajeros
@@ -56,6 +59,7 @@ private final TemplateRenderer renderer;
         this.loginLimiter = loginLimiter;
         this.renderer = renderer;
     }
+
     @Override
     public void register(Javalin app) {
         app.get("/", ctx -> ctx.redirect("/map", HttpStatus.FOUND));
@@ -65,6 +69,7 @@ private final TemplateRenderer renderer;
         app.post("/register", this::registerPassenger);
         app.post("/logout", this::logout);
     }
+
     private void showLogin(Context ctx) {
         if (WebSession.currentUser(ctx) != null) {
             ctx.redirect("/map", HttpStatus.FOUND);
@@ -72,6 +77,7 @@ private final TemplateRenderer renderer;
         }
         renderer.render(ctx, "auth/login", Map.of("userType", "PASSENGER", "email", ""));
     }
+
     private void login(Context ctx) {
         String userType = ADMIN_OPTION.equals(ctx.formParam("userType")) ? ADMIN_OPTION : "PASSENGER";
         String email = ctx.formParam("email");
@@ -105,6 +111,7 @@ private final TemplateRenderer renderer;
             showLoginError(ctx, userType, email, e.getMessage());
         }
     }
+
     /** Vuelve a mostrar el login con el error. La contraseña nunca se devuelve al formulario. */
     private void showLoginError(Context ctx, String userType, String email, String error) {
         ctx.status(UNPROCESSABLE);
@@ -113,12 +120,14 @@ private final TemplateRenderer renderer;
                 "email", email == null ? "" : email,
                 "error", error));
     }
+
     private void showRegister(Context ctx) {
         renderer.render(ctx, "auth/register", Map.of(
                 "form", Map.of(),
                 "minPasswordLength", PassengerService.MIN_PASSWORD_LENGTH,
                 "today", LocalDate.now().toString()));
     }
+
     private void registerPassenger(Context ctx) {
         Map<String, String> form = new HashMap<>();
         for (String field : new String[]{"nationalId", "name", "lastName", "email", "birthDate"}) {
@@ -139,11 +148,13 @@ private final TemplateRenderer renderer;
                     "error", e.getMessage()));
         }
     }
+
     private void logout(Context ctx) {
         WebSession.logout(ctx);
         FlashMessages.success(ctx, "Cerraste sesión. ¡Hasta pronto!");
         ctx.redirect("/login", HttpStatus.FOUND);
     }
+
     /**
      * Convierte la fecha del campo type="date" (aaaa-mm-dd).
      *
