@@ -1,20 +1,17 @@
-
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head('Algo salió mal')}"></head>
 <body>
 <header th:replace="~{fragments/layout :: navbar}"></header>
-<main class="container container-narrow">
-    <section class="card error-card" role="alert">
+<main class="container">
+    <section class="card error-page" role="alert">
         <img src="/images/error-view-mascot.png" alt="" class="error-mascot">
         <div>
-            <p class="error-code" th:text="'Error ' + ${status}">Error</p>
+            <p class="error-code" th:text="'Error ' + ${status}">Error 404</p>
             <h1>Algo salió mal</h1>
-            <p th:text="${message}">Mensaje del error.</p>
-            <div class="actions">
-                <a href="/map" class="btn btn-primary" th:if="${currentUser != null}">Ir al mapa</a>
-                <a href="/login" class="btn btn-primary" th:if="${currentUser == null}">Iniciar sesión</a>
-            </div>
+            <p th:text="${message}">La página que buscas no existe.</p>
+            <a href="/map" class="btn btn-primary btn-lg" th:if="${currentUser != null}">Ir al mapa</a>
+            <a href="/login" class="btn btn-primary btn-lg" th:if="${currentUser == null}">Iniciar sesión</a>
         </div>
     </section>
 </main>
