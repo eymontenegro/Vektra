@@ -1,4 +1,5 @@
 package com.vektra.service;
+
 import com.vektra.dao.PassengerDao;
 import com.vektra.dao.TicketDao;
 import com.vektra.exception.DataAccessException;
@@ -11,6 +12,7 @@ import com.vektra.model.Station;
 import com.vektra.model.Ticket;
 import com.vektra.security.AccessControl;
 import com.vektra.security.SessionUser;
+
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -22,6 +24,7 @@ import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+
 /**
  * Reglas de negocio del ciclo del ticket: compra (con precio calculado aquí),
  * guardado, envío por correo y consulta de los tickets de un pasajero.
@@ -30,14 +33,17 @@ import java.util.stream.Collectors;
  * pasajero. Ya no depende de la sesión estática UserSession.
  */
 public class TicketService {
+
     /** Tarifa única por trayecto, en pesos colombianos. */
     private static final BigDecimal BASE_FARE = new BigDecimal("2500");
     private static final String FOREIGN_KEY_VIOLATION = "23503";
     private static final Logger LOGGER = Logger.getLogger(TicketService.class.getName());
+
     private final TicketDao ticketDao;
     private final PassengerDao passengerDao;
     private final RouteService routeService;
     private final EmailService emailService;
+
     /**
      * Resultado de una compra: el ticket guardado y si el correo se pudo enviar.
      * Si el correo falla, el ticket sigue siendo válido.
@@ -46,6 +52,7 @@ public class TicketService {
      * @param emailSent true si el correo salió
      */
     public record PurchaseResult(Ticket ticket, boolean emailSent) { }
+
     /**
      * Ticket con la línea de la ruta que une sus estaciones, para "Mis tickets".
      *
@@ -54,6 +61,7 @@ public class TicketService {
      *               antes de la regla de ruta directa, o una ruta que ya no existe)
      */
     public record PassengerTicket(Ticket ticket, LineColor line) { }
+
     /**
      * @param ticketDao    acceso a datos de tickets
      * @param passengerDao acceso a datos de pasajeros, para cargar al comprador
@@ -67,10 +75,12 @@ public class TicketService {
         this.routeService = routeService;
         this.emailService = emailService;
     }
+
     /** @return precio de un trayecto, para mostrarlo antes de comprar */
     public BigDecimal getFare() {
         return calculatePrice();
     }
+
     /**
      * Compra un ticket para el pasajero de la sesión. Guarda primero y envía
      * el correo solo si el guardado fue exitoso.
@@ -102,6 +112,7 @@ public class TicketService {
                     "No hay una ruta directa entre estas estaciones. Elige otro origen o destino.");
         }
         Passenger passenger = loadPassenger(actor.id());
+
         Ticket ticket = new Ticket(0, generateCode(), LocalDateTime.now(), calculatePrice(),
                 passenger, origin, destination);
         try {
@@ -117,6 +128,7 @@ public class TicketService {
         }
         return new PurchaseResult(ticket, emailService.send(ticket));
     }
+
     /**
      * Devuelve los tickets del pasajero de la sesión, del más reciente al
      * más antiguo, cada uno con la línea de su ruta directa (si existe).
@@ -147,6 +159,7 @@ public class TicketService {
         }
         return result;
     }
+
     /** Carga los datos completos del pasajero que tiene la sesión. */
     private Passenger loadPassenger(int passengerId) {
         try {
@@ -160,10 +173,12 @@ public class TicketService {
             throw new DataAccessException("No se pudo conectar con la base de datos. Intenta de nuevo.", e);
         }
     }
+
     /** Hoy la tarifa es única; si cambia la regla, se cambia solo aquí. */
     private BigDecimal calculatePrice() {
         return BASE_FARE;
     }
+
     /** Código corto y difícil de adivinar, por ejemplo VK-3F9A1C2B7D. */
     private String generateCode() {
         return "VK-" + UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase();
