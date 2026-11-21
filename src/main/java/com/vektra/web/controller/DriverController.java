@@ -1,4 +1,5 @@
 package com.vektra.web.controller;
+
 import com.vektra.exception.NotFoundException;
 import com.vektra.exception.ValidationException;
 import com.vektra.model.Driver;
@@ -19,28 +20,28 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 /**
-* Gestión de conductores para el administrador. Reemplaza a DriversPanel,
-* AddDriverPanel y DeleteDriverPanel.
-*
-* Rutas:
-*   GET  /admin/drivers               
-lista de conductores
-*   GET  /admin/drivers/new           
-*   POST /admin/drivers               
-formulario de nuevo conductor
-guarda el conductor
-*   POST /admin/drivers/{id}/status   activa o desactiva
-*   POST /admin/drivers/{id}/delete   borra (pide doble confirmación en la página)
-*/
+ * Gestión de conductores para el administrador. Reemplaza a DriversPanel,
+ * AddDriverPanel y DeleteDriverPanel.
+ *
+ * Rutas:
+ *   GET  /admin/drivers               lista de conductores
+ *   GET  /admin/drivers/new           formulario de nuevo conductor
+ *   POST /admin/drivers               guarda el conductor
+ *   POST /admin/drivers/{id}/status   activa o desactiva
+ *   POST /admin/drivers/{id}/delete   borra (pide doble confirmación en la página)
+ */
 public class DriverController implements Controller {
-private static final int UNPROCESSABLE = 422;
-private static final String LIST_PATH = "/admin/drivers";
-private static final String[] FORM_FIELDS = {"nationalId", "name", "lastName", "licenseNumber", "phone", 
-"routeId"};
-private final DriverService driverService;
-private final RouteService routeService;
+
+    private static final int UNPROCESSABLE = 422;
+    private static final String LIST_PATH = "/admin/drivers";
+    private static final String[] FORM_FIELDS = {"nationalId", "name", "lastName", "licenseNumber", "phone", "routeId"};
+
+    private final DriverService driverService;
+    private final RouteService routeService;
     private final TemplateRenderer renderer;
+
     /**
      * Fila de la tabla de conductores.
      *
@@ -48,6 +49,7 @@ private final RouteService routeService;
      * @param routeLabel texto de su ruta asignada
      */
     public record DriverRow(Driver driver, String routeLabel) { }
+
     /**
      * Opción del selector de rutas.
      *
@@ -55,6 +57,7 @@ private final RouteService routeService;
      * @param label texto que ve el usuario
      */
     public record RouteOption(int id, String label) { }
+
     /**
      * @param driverService reglas de los conductores
      * @param routeService  rutas para el selector y la tabla
@@ -65,6 +68,7 @@ private final RouteService routeService;
         this.routeService = routeService;
         this.renderer = renderer;
     }
+
     @Override
     public void register(Javalin app) {
         app.get(LIST_PATH, this::list);
@@ -73,6 +77,7 @@ private final RouteService routeService;
         app.post(LIST_PATH + "/{id}/status", this::toggleStatus);
         app.post(LIST_PATH + "/{id}/delete", this::delete);
     }
+
     private void list(Context ctx) {
         SessionUser actor = WebSession.requireUser(ctx);
         Map<Integer, String> routeLabels = routeOptions().stream()
@@ -83,6 +88,7 @@ private final RouteService routeService;
                 .toList();
         renderer.render(ctx, "fleet/drivers", Map.of("drivers", rows));
     }
+
     /**
      * Muestra el formulario de nuevo conductor.
      *
@@ -99,6 +105,7 @@ private final RouteService routeService;
         }
         renderer.render(ctx, "fleet/driver-form", model);
     }
+
     private void create(Context ctx) {
         SessionUser actor = WebSession.requireUser(ctx);
         Map<String, String> form = readForm(ctx);
@@ -113,6 +120,7 @@ private final RouteService routeService;
             showForm(ctx, form, e.getMessage());
         }
     }
+
     private void toggleStatus(Context ctx) {
         SessionUser actor = WebSession.requireUser(ctx);
         try {
@@ -123,6 +131,7 @@ private final RouteService routeService;
         }
         ctx.redirect(LIST_PATH, HttpStatus.FOUND);
     }
+
     private void delete(Context ctx) {
         SessionUser actor = WebSession.requireUser(ctx);
         try {
@@ -133,12 +142,14 @@ private final RouteService routeService;
         }
         ctx.redirect(LIST_PATH, HttpStatus.FOUND);
     }
+
     /** Rutas para el selector, con el mismo texto que usaba AddDriverPanel. */
     private List<RouteOption> routeOptions() {
         return routeService.getRoutes().stream()
                 .map(route -> new RouteOption(route.getId(), RouteFormatter.format(route)))
                 .toList();
     }
+
     private static Map<String, String> readForm(Context ctx) {
         Map<String, String> form = new HashMap<>();
         for (String field : FORM_FIELDS) {
@@ -147,6 +158,7 @@ private final RouteService routeService;
         }
         return form;
     }
+
     private static int pathId(Context ctx) {
         return InputValidator.requireInt(ctx.pathParam("id"), "El conductor seleccionado no es válido.");
     }
