@@ -1,4 +1,5 @@
 package com.vektra.service;
+
 import com.vektra.dao.RouteDao;
 import com.vektra.dao.StationDao;
 import com.vektra.exception.DataAccessException;
@@ -12,21 +13,27 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 /**
-* Entrega las estaciones y las rutas del metro.
-*
-* El mapa, la compra de tickets y el registro de conductores solo hablan con
-* esta clase y nunca con los DAO. Si la base de datos falla lanza
-* DataAccessException con un mensaje en español; el detalle queda en el registro.
-*/
+ * Entrega las estaciones y las rutas del metro.
+ *
+ * El mapa, la compra de tickets y el registro de conductores solo hablan con
+ * esta clase y nunca con los DAO. Si la base de datos falla lanza
+ * DataAccessException con un mensaje en español; el detalle queda en el registro.
+ */
 public class RouteService {
-private static final Logger LOGGER = Logger.getLogger(RouteService.class.getName());
-private static final String LOAD_ERROR =
-"No se pudieron cargar las estaciones y rutas. Intenta de nuevo en unos minutos.";
-/** Acceso a las rutas en la base de datos. */
-private final RouteDao routeDao;
+
+    private static final Logger LOGGER = Logger.getLogger(RouteService.class.getName());
+
+    private static final String LOAD_ERROR =
+            "No se pudieron cargar las estaciones y rutas. Intenta de nuevo en unos minutos.";
+
+    /** Acceso a las rutas en la base de datos. */
+    private final RouteDao routeDao;
+
     /** Acceso a las estaciones en la base de datos. */
     private final StationDao stationDao;
+
     /**
      * Crea el servicio con los DAO que usará.
      *
@@ -37,6 +44,7 @@ private final RouteDao routeDao;
         this.routeDao = routeDao;
         this.stationDao = stationDao;
     }
+
     /**
      * Todas las estaciones, ordenadas por nombre.
      *
@@ -50,6 +58,7 @@ private final RouteDao routeDao;
             throw failure(e);
         }
     }
+
     /**
      * Busca una estación por su id.
      *
@@ -60,6 +69,7 @@ private final RouteDao routeDao;
     public Optional<Station> findStation(int stationId) {
         return getStations().stream().filter(station -> station.getId() == stationId).findFirst();
     }
+
     /**
      * Todas las rutas con sus estaciones.
      *
@@ -73,6 +83,7 @@ private final RouteDao routeDao;
             throw failure(e);
         }
     }
+
     /**
      * Indica si existe una ruta con ese id.
      *
@@ -87,6 +98,7 @@ private final RouteDao routeDao;
             throw failure(e);
         }
     }
+
     /**
      * Busca la ruta que une dos estaciones, en cualquier sentido, para
      * mostrar su tiempo, distancia y transbordos antes de comprar.
@@ -103,6 +115,7 @@ private final RouteDao routeDao;
         }
         return findRoute(getRoutes(), originId, destinationId);
     }
+
     /**
      * Busca, dentro de una lista ya cargada, la ruta que une dos estaciones.
      * Sirve para no consultar la base una vez por cada ticket.
@@ -115,6 +128,7 @@ private final RouteDao routeDao;
     public static Optional<Route> findRoute(List<Route> routes, int originId, int destinationId) {
         return routes.stream().filter(route -> route.connects(originId, destinationId)).findFirst();
     }
+
     /** Indexa las estaciones por su id para que RouteDao las encuentre rápido. */
     private Map<Integer, Station> indexById(List<Station> stations) {
         Map<Integer, Station> stationsById = new HashMap<>();
@@ -123,6 +137,7 @@ private final RouteDao routeDao;
         }
         return stationsById;
     }
+
     /** Registra el error técnico y devuelve uno con mensaje para el usuario. */
     private DataAccessException failure(SQLException e) {
         LOGGER.log(Level.SEVERE, "Fallo de base de datos en RouteService", e);
