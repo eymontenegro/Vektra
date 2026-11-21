@@ -1,18 +1,22 @@
 package com.vektra.dao;
+
 import com.vektra.model.Driver;
 import com.vektra.model.DriverStatus;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
 /**
-* Convierte una fila de la tabla drivers en un Driver.
-*
-* Antes DriverDao y VehicleDao armaban el conductor cada uno con su propio
+ * Convierte una fila de la tabla drivers en un Driver.
+ *
+ * Antes DriverDao y VehicleDao armaban el conductor cada uno con su propio
  * código repetido; ahora los dos usan esta clase.
  */
 final class DriverRowMapper {
+
     /** Constructor privado: esta clase solo tiene métodos estáticos. */
     private DriverRowMapper() {
     }
+
     /**
      * Lee el conductor de la fila actual.
      *
