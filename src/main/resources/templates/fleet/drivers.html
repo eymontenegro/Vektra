@@ -12,7 +12,8 @@
         </div>
         <a href="/admin/drivers/new" class="btn btn-primary">Añadir conductor</a>
     </div>
-    <section class="card">
+
+    <section class="card card-flush">
         <p class="empty-state" th:if="${#lists.isEmpty(drivers)}">Todavía no hay conductores registrados.</p>
         <div class="table-wrap" th:unless="${#lists.isEmpty(drivers)}">
             <table class="table">
@@ -30,24 +31,25 @@
                     <td th:text="${driver.lastName}">Pérez</td>
                     <td th:text="${driver.licenseNumber} ?: '—'">LIC-0001</td>
                     <td th:text="${driver.phone} ?: '—'">3001112233</td>
-                    <td class="small" th:text="${row.routeLabel()}">Ruta</td>
+                    <td class="route-label" th:text="${row.routeLabel()}">Ruta</td>
                     <td>
                         <span th:class="${driver.active} ? 'badge badge-ok' : 'badge badge-off'"
                               th:text="${driver.status.displayName}">Activo</span>
                     </td>
-                    <td class="actions">
-                        <form method="post" th:action="'/admin/drivers/' + ${driver.id} + '/status'">
-                            <input type="hidden" name="_csrf" th:value="${csrfToken}">
-                            <button type="submit" class="btn btn-outline btn-small"
-                                    th:text="${driver.active} ? 'Desactivar' : 'Activar'">Desactivar</button>
-                        </form>
-                        <form method="post" th:action="'/admin/drivers/' + ${driver.id} + '/delete'"
-                              th:attr="data-confirm=${'¿Seguro que quieres borrar a ' + driver.fullName + ' - ' + 
-driver.nationalId + '?'}"
-                              data-confirm-again="Esta acción no se puede deshacer. ¿Borrar de todas formas?">
-                            <input type="hidden" name="_csrf" th:value="${csrfToken}">
-                            <button type="submit" class="btn btn-danger btn-small">Borrar</button>
-                        </form>
+                    <td>
+                        <div class="actions">
+                            <form method="post" th:action="'/admin/drivers/' + ${driver.id} + '/status'">
+                                <input type="hidden" name="_csrf" th:value="${csrfToken}">
+                                <button type="submit" class="btn btn-outline btn-small"
+                                        th:text="${driver.active} ? 'Desactivar' : 'Activar'">Desactivar</button>
+                            </form>
+                            <form method="post" th:action="'/admin/drivers/' + ${driver.id} + '/delete'"
+                                  th:attr="data-confirm=${'¿Seguro que quieres borrar a ' + driver.fullName + ' - ' + driver.nationalId + '?'}"
+                                  data-confirm-again="Esta acción no se puede deshacer. ¿Borrar de todas formas?">
+                                <input type="hidden" name="_csrf" th:value="${csrfToken}">
+                                <button type="submit" class="btn btn-danger-outline btn-small">Borrar</button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 </tbody>
