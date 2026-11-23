@@ -3,19 +3,23 @@
 <head th:replace="~{fragments/layout :: head('Añadir conductor')}"></head>
 <body>
 <header th:replace="~{fragments/layout :: navbar}"></header>
-<main class="container container-narrow">
+<main class="container">
     <div th:replace="~{fragments/layout :: flash}"></div>
+    <th:block th:if="${error}"><div th:replace="~{fragments/layout :: formError(${error})}"></div></th:block>
+
     <form method="post" action="/admin/drivers" class="card form" data-validate>
         <h1>Añadir conductor</h1>
         <p class="muted">Los campos marcados como opcionales se pueden dejar vacíos.</p>
-        <div class="alert alert-error" role="alert" th:if="${error}" th:text="${error}">Error</div>
         <input type="hidden" name="_csrf" th:value="${csrfToken}">
-        <label for="nationalId">Cédula</label>
-        <input id="nationalId" name="nationalId" required inputmode="numeric" pattern="\d{6,12}" maxlength="12"
-               placeholder="Ej. 1020304050" th:value="${form.nationalId}"
-               data-message-required="La cédula es obligatoria."
-               data-message-pattern="La cédula debe tener entre 6 y 12 dígitos, sin puntos ni espacios.">
-        <div class="form-row">
+
+        <div class="form-grid cols-3">
+            <div>
+                <label for="nationalId">Cédula</label>
+                <input id="nationalId" name="nationalId" required inputmode="numeric" pattern="\d{6,12}" maxlength="12"
+                       placeholder="Ej. 1020304050" th:value="${form.nationalId}"
+                       data-message-required="La cédula es obligatoria."
+                       data-message-pattern="La cédula debe tener entre 6 y 12 dígitos, sin puntos ni espacios.">
+            </div>
             <div>
                 <label for="name">Nombre</label>
                 <input id="name" name="name" required maxlength="100" placeholder="Ej. Carlos"
@@ -26,21 +30,28 @@
                 <input id="lastName" name="lastName" required maxlength="100" placeholder="Ej. Pérez"
                        th:value="${form.lastName}" data-message-required="El apellido es obligatorio.">
             </div>
+            <div>
+                <label for="licenseNumber">Licencia (opcional)</label>
+                <input id="licenseNumber" name="licenseNumber" maxlength="50" placeholder="Ej. LIC-0003"
+                       th:value="${form.licenseNumber}">
+            </div>
+            <div>
+                <label for="phone">Teléfono (opcional)</label>
+                <input id="phone" name="phone" inputmode="numeric" pattern="\d{7,15}" maxlength="15"
+                       placeholder="Ej. 3001112233" th:value="${form.phone}"
+                       data-message-pattern="El teléfono debe tener entre 7 y 15 dígitos, sin espacios ni guiones.">
+            </div>
+            <div>
+                <label for="routeId">Ruta asignada</label>
+                <select id="routeId" name="routeId" required data-message-required="Selecciona la ruta asignada.">
+                    <option value="">Elige una ruta</option>
+                    <option th:each="route : ${routes}" th:value="${route.id()}" th:text="${route.label()}"
+                            th:selected="${#strings.toString(route.id()) == form.routeId}">Ruta</option>
+                </select>
+            </div>
         </div>
-        <label for="licenseNumber">Licencia (opcional)</label>
-        <input id="licenseNumber" name="licenseNumber" maxlength="50" placeholder="Ej. LIC-0003"
-               th:value="${form.licenseNumber}">
-        <label for="phone">Teléfono (opcional)</label>
-        <input id="phone" name="phone" inputmode="numeric" pattern="\d{7,15}" maxlength="15"
-               placeholder="Ej. 3001112233" th:value="${form.phone}"
-               data-message-pattern="El teléfono debe tener entre 7 y 15 dígitos, sin espacios ni guiones.">
-        <label for="routeId">Ruta asignada</label>
-        <select id="routeId" name="routeId" required data-message-required="Selecciona la ruta asignada.">
-            <option value="">Elige una ruta</option>
-            <option th:each="route : ${routes}" th:value="${route.id()}" th:text="${route.label()}"
-                    th:selected="${#strings.toString(route.id()) == form.routeId}">Ruta</option>
-        </select>
-        <div class="actions">
+
+        <div class="form-actions">
             <a href="/admin/drivers" class="btn btn-outline">Cancelar</a>
             <button type="submit" class="btn btn-primary" data-busy-text="Guardando…">Guardar</button>
         </div>
