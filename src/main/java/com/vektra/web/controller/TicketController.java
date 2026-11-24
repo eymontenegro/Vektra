@@ -119,8 +119,7 @@ try {
 int originId = InputValidator.requireInt(originParam,
 "Selecciona la estación de origen.");
 int destinationId =
-InputValidator.requireInt(destinationParam, "Selecciona la estación de
-destino.");
+InputValidator.requireInt(destinationParam, "Selecciona la estación de destino.");
 PurchaseResult result = ticketService.buyTicket(actor,
 originId, destinationId);
 FlashMessages.success(ctx, purchaseMessage(result));
@@ -140,8 +139,7 @@ private void findRoute(Context ctx) {
 RouteInfo info;
 try {
 int originId =
-InputValidator.requireInt(ctx.queryParam("originId"), "Elige la estación
-de origen.");
+InputValidator.requireInt(ctx.queryParam("originId"), "Elige la estación de origen.");
 int destinationId =
 InputValidator.requireInt(ctx.queryParam("destinationId"),
 "Elige la estación de destino.");
@@ -149,9 +147,7 @@ Optional<Route> route = routeService.findRoute(originId,
 destinationId);
 info = route.map(found -> new RouteInfo(true,
 RouteFormatter.format(found),
-found.getLineColor().getHexCode()))
-.orElse(new RouteInfo(false, "No hay una ruta directa
-entre estas estaciones.", null));
+found.getLineColor().getHexCode())).orElse(new RouteInfo(false, "No hay una ruta directa entre estas estaciones.", null));
 } catch (ValidationException e) {
 info = new RouteInfo(false, e.getMessage(), null);
 } catch (DataAccessException e) {
@@ -172,8 +168,7 @@ if (result.emailSent()) {
 return message + " Te lo enviamos a " +
 ticket.getPassengerEmail() + ".";
 }
-return message + " No pudimos enviarlo por correo: guarda el
-código, también lo verás en Mis tickets.";
+return message + " No pudimos enviarlo por correo: guarda el código, también lo verás en Mis tickets.";
 }
 private static TicketRow toRow(PassengerTicket passengerTicket) {
 Ticket ticket = passengerTicket.ticket();
