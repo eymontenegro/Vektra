@@ -95,7 +95,7 @@ public final class WebServer {
             // Cabeceras básicas de seguridad para todas las respuestas.
             ctx.header("X-Content-Type-Options", "nosniff");
             ctx.header("X-Frame-Options", "DENY");
-            ctx.header("Referrer-Policy", "same-origin");
+            ctx.header("Referrer-Policy", "strict-origin-when-cross-origin");
             ctx.header("Content-Security-Policy", CONTENT_SECURITY_POLICY);
         });
         app.before(AccessFilter::check);
